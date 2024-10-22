@@ -191,17 +191,19 @@ local spinJumpActs = {
 
 ---@param m MarioState
 local function rosalina_before_action(m, nextAct)
-    if m.playerIndex == 0 then
-        if spinJumpActs[nextAct] and m.input & (INPUT_Z_DOWN | INPUT_A_DOWN) == 0 then
-            return set_mario_action(m, ACT_SPINJUMP, 0)
-        end
-        if usedSpinJump and ((nextAct & ACT_GROUP_MASK) ~= ACT_GROUP_AIRBORNE or nextAct == ACT_WALL_KICK_AIR) then
-            usedSpinJump = false
-            play_sound_with_freq_scale(SOUND_GENERAL_COIN_SPURT_EU, m.marioObj.header.gfx.cameraToObject, 1.6)
-            spawn_non_sync_object(id_bhvSparkle, E_MODEL_SPARKLES_ANIMATION, m.pos.x, m.pos.y + 200, m.pos.z, function (o)
-                obj_scale(o, 0.75)
-            end)
-        end
+    if spinJumpActs[nextAct] and m.input & (INPUT_Z_DOWN | INPUT_A_DOWN) == 0 then
+        return set_mario_action(m, ACT_SPINJUMP, 0)
+    end
+    if usedSpinJump and ((nextAct & ACT_GROUP_MASK) ~= ACT_GROUP_AIRBORNE) then
+        usedSpinJump = false
+        play_sound_with_freq_scale(SOUND_GENERAL_COIN_SPURT_EU, m.marioObj.header.gfx.cameraToObject, 1.6)
+        spawn_non_sync_object(id_bhvSparkle, E_MODEL_SPARKLES_ANIMATION, m.pos.x, m.pos.y + 200, m.pos.z, function (o)
+            obj_scale(o, 0.75)
+        end)
+    end
+    -- Recharge without indicator (Accurate to Galaxy)
+    if usedSpinJump and nextAct == ACT_WALL_KICK_AIR then
+        usedSpinJump = false
     end
 end
 
