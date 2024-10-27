@@ -989,7 +989,8 @@ extraCharacters = {
             [CHAR_ANIM_UNLOCK_DOOR] = 'princess_unlock_door',
             [CHAR_ANIM_SWINGING_BOWSER] = 'princess_swinging_bowser',
             [CHAR_ANIM_HOLDING_BOWSER] = 'princess_holding_bowser',
-            [CHAR_ANIM_GRAB_BOWSER] = 'princess_grab_bowser'
+            [CHAR_ANIM_GRAB_BOWSER] = 'princess_grab_bowser',
+            [CHAR_ANIM_BEND_KNESS_RIDING_SHELL] = 'rosalina_spinjump',
         }
     },
     -------------
