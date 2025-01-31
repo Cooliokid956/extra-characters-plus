@@ -878,6 +878,8 @@ extraCharacters = {
             [CHAR_ANIM_FORWARD_KB] = 'donkey_7C _forward_kb',
             [CHAR_ANIM_GROUND_BONK] = 'donkey_8A _ground_bonk',
             [CHAR_ANIM_TWIRL_LAND] = 'donkey_93_twirl_land',
+            [CHAR_ANIM_SUMMON_STAR] = 'donkey_9C_summon_star',
+            
         }
     },
     --------------
