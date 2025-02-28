@@ -895,7 +895,9 @@ extraCharacters = {
             [CHAR_ANIM_CROUCH_FROM_FAST_LONGJUMP] = 'donkey_11_crouch_from_fast_long_jump',
             [CHAR_ANIM_CROUCH_FROM_SLOW_LONGJUMP] = 'donkey_12_crouch_from_slow_long_jump',
             [CHAR_ANIM_WALK_PANTING] = 'donkey_ba_walk_panting',
-        }
+            [CHAR_ANIM_STAND_UP_FROM_LAVA_BOOST] = 'donkey_28_standup_from_lava_boost',
+            [CHAR_ANIM_FIRE_LAVA_BURN] = 'donkey_29_fire_lave_burn',
+            }
     },
     --------------
     -- Rosalina --
