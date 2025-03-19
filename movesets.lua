@@ -1265,6 +1265,8 @@ local function bhv_axe_attack_init(o)
     cur_obj_become_tangible()
 
     network_init_object(o, true, {})
+    spawn_triangle_break_particles(5, 138 , 2.5, 4)
+
 end
 
 ---@param o Object
