@@ -1255,10 +1255,10 @@ local function bhv_axe_attack_init(o)
     o.oDamageOrCoinValue = 2
     o.oNumLootCoins = 0
     o.oHealth = 0
-    o.hitboxRadius = 50
-    o.hitboxHeight = 50
-    o.hurtboxRadius = 50
-    o.hurtboxHeight = 50
+    o.hitboxRadius = 80
+    o.hitboxHeight = 70
+    o.hurtboxRadius = 80
+    o.hurtboxHeight = 70
     o.hitboxDownOffset = 0
     o.oInteractType = INTERACT_DAMAGE
     cur_obj_scale(1)
@@ -1273,9 +1273,9 @@ end
 local function bhv_axe_attack_loop(o)
     cur_obj_update_floor_and_resolve_wall_collisions(90)
     cur_obj_move_standard(78)
-    local m = gMarioStates[o.globalPlayerIndex]
+    local m = gMarioStates[network_local_index_from_global(o.globalPlayerIndex)]
     
-    local dist = 180
+    local dist = 200
     local x = get_hand_foot_pos_x(m, 0) + sins(m.faceAngle.y) * coss(m.faceAngle.x) * dist
     --local y = get_hand_foot_pos_y(m, 0) + sins(m.faceAngle.x) * dist
     local z = get_hand_foot_pos_z(m, 0) + coss(m.faceAngle.y) * coss(m.faceAngle.x) * dist
@@ -1284,7 +1284,7 @@ local function bhv_axe_attack_loop(o)
     local axePos_v3f = {x=handPos_v3f.x, y=handPos_v3f.y, z=handPos_v3f.z}
     vec3f_sub(axePos_v3f,m.pos)
     vec3f_normalize(axePos_v3f)
-    vec3f_mul(axePos_v3f, 140)
+    vec3f_mul(axePos_v3f, 120)
     o.oPosX = x
     o.oPosY = handPos_v3f.y - axePos_v3f.y
     o.oPosZ = z
@@ -1317,9 +1317,9 @@ local function bhv_axe_attack_sweetSpot_init(o)
     o.oDamageOrCoinValue = 5
     o.oNumLootCoins = 0
     o.oHealth = 0
-    o.hitboxRadius = 20
+    o.hitboxRadius = 80
     o.hitboxHeight = 50
-    o.hurtboxRadius = 20
+    o.hurtboxRadius = 80
     o.hurtboxHeight = 50
     o.hitboxDownOffset = 0
     o.oInteractType = INTERACT_DAMAGE
@@ -1335,9 +1335,9 @@ end
 local function bhv_axe_attack_sweetSpot_loop(o)
     cur_obj_update_floor_and_resolve_wall_collisions(90)
     cur_obj_move_standard(78)
-    local m = gMarioStates[o.globalPlayerIndex]
+    local m = gMarioStates[network_local_index_from_global(o.globalPlayerIndex)]
     
-    local dist = 180
+    local dist = 125
     local x = get_hand_foot_pos_x(m, 0) + sins(m.faceAngle.y) * coss(m.faceAngle.x) * dist
     --local y = get_hand_foot_pos_y(m, 0) + sins(m.faceAngle.x) * dist
     local z = get_hand_foot_pos_z(m, 0) + coss(m.faceAngle.y) * coss(m.faceAngle.x) * dist
@@ -1346,7 +1346,7 @@ local function bhv_axe_attack_sweetSpot_loop(o)
     local axePos_v3f = {x=handPos_v3f.x, y=handPos_v3f.y, z=handPos_v3f.z}
     vec3f_sub(axePos_v3f,m.pos)
     vec3f_normalize(axePos_v3f)
-    vec3f_mul(axePos_v3f, 155)
+    vec3f_mul(axePos_v3f, 120)
     o.oPosX = x
     o.oPosY = handPos_v3f.y - axePos_v3f.y
     o.oPosZ = z
