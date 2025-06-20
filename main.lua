@@ -25,10 +25,10 @@ extraCharacters = {
         camScale = 0.8,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("toadette_cap_geo"),
-            -- wing = smlua_model_util_get_id("toadette_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("toadette_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("toadette_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("toadette_cap_geo"),
+            wing = smlua_model_util_get_id("toadette_wing_cap_geo"),
+            metal = smlua_model_util_get_id("toadette_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("toadette_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0xFF, g = 0xFF, b = 0xFF },
@@ -99,10 +99,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("peach_player_cap_geo"),
-            -- wing = smlua_model_util_get_id("peach_player_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("peach_player_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("peach_player_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("peach_player_cap_geo"),
+            wing = smlua_model_util_get_id("peach_player_wing_cap_geo"),
+            metal = smlua_model_util_get_id("peach_player_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("peach_player_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0xFF, g = 0x50, b = 0x96 },
@@ -253,10 +253,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("daisy_cap_geo"),
-            -- wing = smlua_model_util_get_id("daisy_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("daisy_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("daisy_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("daisy_cap_geo"),
+            wing = smlua_model_util_get_id("daisy_wing_cap_geo"),
+            metal = smlua_model_util_get_id("daisy_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("daisy_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0xFF, g = 0xFF, b = 0xFF },
@@ -407,10 +407,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("yoshi_player_cap_geo"),
-            -- wing = smlua_model_util_get_id("yoshi_player_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("yoshi_player_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("yoshi_player_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("yoshi_player_cap_geo"),
+            wing = smlua_model_util_get_id("yoshi_player_wing_cap_geo"),
+            metal = smlua_model_util_get_id("yoshi_player_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("yoshi_player_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0xFF, g = 0x00, b = 0x00 },
@@ -480,10 +480,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("birdo_cap_geo"),
-            -- wing = smlua_model_util_get_id("birdo_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("birdo_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("birdo_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("birdo_cap_geo"),
+            wing = smlua_model_util_get_id("birdo_wing_cap_geo"),
+            metal = smlua_model_util_get_id("birdo_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("birdo_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0xFF, g = 0x00, b = 0x00 }, --FF0000
@@ -558,10 +558,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("foreman_spike_cap_geo"),
-            -- wing = smlua_model_util_get_id("foreman_spike_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("foreman_spike_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("foreman_spike_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("foreman_spike_cap_geo"),
+            wing = smlua_model_util_get_id("foreman_spike_wing_cap_geo"),
+            metal = smlua_model_util_get_id("foreman_spike_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("foreman_spike_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0x00, g = 0x00, b = 0xFF }, -- 0000FF
@@ -631,10 +631,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("pauline_cap_geo"),
-            -- wing = smlua_model_util_get_id("pauline_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("pauline_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("pauline_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("pauline_cap_geo"),
+            wing = smlua_model_util_get_id("pauline_wing_cap_geo"),
+            metal = smlua_model_util_get_id("pauline_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("pauline_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0xCF, g = 0x42, b = 0x39 }, -- CF4239
@@ -784,10 +784,10 @@ extraCharacters = {
         camScale = 1.1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("rosalina_cap_geo"),
-            -- wing = smlua_model_util_get_id("rosalina_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("rosalina_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("rosalina_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("rosalina_cap_geo"),
+            wing = smlua_model_util_get_id("rosalina_wing_cap_geo"),
+            metal = smlua_model_util_get_id("rosalina_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("rosalina_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0x8F, g = 0xEF, b = 0xF6 }, -- 8FEFF6
@@ -938,10 +938,10 @@ extraCharacters = {
         camScale = 1,
         offset = 0,
         caps = {
-            -- normal = smlua_model_util_get_id("wapeach_cap_geo"),
-            -- wing = smlua_model_util_get_id("wapeach_wing_cap_geo"),
-            -- metal = smlua_model_util_get_id("wapeach_metal_cap_geo"),
-            -- metalWing = smlua_model_util_get_id("wapeach_metal_wing_cap_geo")
+            normal = smlua_model_util_get_id("wapeach_cap_geo"),
+            wing = smlua_model_util_get_id("wapeach_wing_cap_geo"),
+            metal = smlua_model_util_get_id("wapeach_metal_cap_geo"),
+            metalWing = smlua_model_util_get_id("wapeach_metal_wing_cap_geo")
         },
         palette = {
             [PANTS]  = { r = 0x6C, g = 0x3A, b = 0xAC }, -- 6C3AAC
