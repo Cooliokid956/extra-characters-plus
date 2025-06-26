@@ -2469,7 +2469,7 @@ local function on_character_select_load()
     _G.CT_DAISY             = extraCharacters[3].tablePos  --- @type CharacterType
     _G.CT_YOSHI             = extraCharacters[4].tablePos  --- @type CharacterType
     _G.CT_BIRDO             = extraCharacters[5].tablePos  --- @type CharacterType
-    --_G.CT_FOREMANSDPIKE     = extraCharacters[6].tablePos  --- @type CharacterType
+    --_G.CT_FOREMANSPIKE     = extraCharacters[6].tablePos  --- @type CharacterType
     _G.CT_PAULINE           = extraCharacters[7].tablePos  --- @type CharacterType
     _G.CT_ROSALINA          = extraCharacters[8].tablePos  --- @type CharacterType
     _G.CT_WAPEACH           = extraCharacters[9].tablePos  --- @type CharacterType

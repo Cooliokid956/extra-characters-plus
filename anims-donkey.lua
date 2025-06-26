@@ -1,5 +1,17 @@
 if not _G.charSelectExists then return end
 
+-- Disables Torso Tilting to fix DK Walk
+local function mario_update(m)
+	if m.action == ACT_WALKING and _G.charSelect.character_get_current_number(m.playerIndex) == extraCharacters[10].tablePos then
+        m.marioBodyState.torsoAngle.x = 0
+        m.marioBodyState.torsoAngle.z = 0
+        --results in double step sounds when going at the usual 32 speed (sigh)
+        m.marioObj.header.gfx.animInfo.animAccel = m.marioObj.header.gfx.animInfo.animAccel * 0.85
+    end
+end
+hook_event(HOOK_MARIO_UPDATE, mario_update)
+
+
 smlua_anim_util_register_animation('donkey_first_person',0, 0, 0, 0, 30, { 
 	0x0000, 0x008B, 0x008B, 0x008B, 0x008B, 0x008A, 0x008A, 0x0089, 0x0088, 
 	0x0087, 0x0086, 0x0085, 0x0085, 0x0084, 0x0084, 0x0084, 0x0084, 0x0084, 
