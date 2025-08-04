@@ -2035,7 +2035,7 @@ local function sonic_anim_and_audio_for_walk(m, walkCap, jogCap, runCap)
                 elseif (val04 > walkCap) then
                     m.actionTimer = 3
                 else
-                    set_mario_anim_with_accel(m, MARIO_ANIM_WALKING, 4.0 * 0x10000)
+                    set_mario_anim_with_accel(m, MARIO_ANIM_WALKING, 2.0 * 0x10000)
                     play_step_sound(m, 10, 49)
 
                     val0C = false
@@ -2045,14 +2045,14 @@ local function sonic_anim_and_audio_for_walk(m, walkCap, jogCap, runCap)
                     m.actionTimer = 2
                 else
                     if m.forwardVel > runCap then
-                        play_step_sound(m, 44, 88)
-                        set_mario_anim_with_accel(m, MARIO_ANIM_RUNNING_UNUSED, m.forwardVel/3 * 0x8000)
+                        play_step_sound(m, 11, 22)
+                        set_mario_anim_with_accel(m, MARIO_ANIM_RUNNING_UNUSED, m.forwardVel/8 * 0x8000)
                     elseif m.forwardVel > jogCap then
                         play_step_sound(m, 14, 29)
                         play_custom_anim(m, CUSTOM_CHAR_ANIM_SONIC_RUN, m.forwardVel/8 * 0x8000)
                     else
                         play_step_sound(m, 26, 58)
-                        set_mario_anim_with_accel(m, MARIO_ANIM_RUNNING, 7.0 * 0x10000)
+                        set_mario_anim_with_accel(m, MARIO_ANIM_RUNNING, m.forwardVel/2.0 * 0x8000)
                     end
                     if jogCap - val04 <= 30 and math.sign(jogCap - val04) == 1 then
                         m.marioBodyState.allowPartRotation = true
