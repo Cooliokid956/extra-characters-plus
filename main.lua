@@ -394,9 +394,11 @@ extraCharacters = {
             [CHAR_ANIM_SWINGING_BOWSER] = 'princess_swinging_bowser',
             [CHAR_ANIM_HOLDING_BOWSER] = 'princess_holding_bowser',
             [CHAR_ANIM_GRAB_BOWSER] = 'princess_grab_bowser',
-            [CHAR_ANIM_BEND_KNESS_RIDING_SHELL] = 'daisy_dressjump'
+            [CHAR_ANIM_BEND_KNESS_RIDING_SHELL] = 'daisy_dressjump',
+            [CS_ANIM_MENU] = 'cs_daisy'
         }
     },
+    
     -----------
     -- Yoshi --
     -----------
@@ -467,8 +469,11 @@ extraCharacters = {
             [CHAR_SOUND_YAWNING] = "yoshi_yawning.ogg",
             [CHAR_SOUND_YAHOO_WAHA_YIPPEE] = { "yoshi_yahoo.ogg", "yoshi_yahoo1.ogg", "yoshi_yahoo2.ogg", "yoshi_yahoo3.ogg", "yoshi_yahoo4.ogg", "yoshi_yahoo5.ogg" },
             [CHAR_SOUND_YAH_WAH_HOO] = { "yoshi_yah_wah_hoo1.ogg", "yoshi_yah_wah_hoo2.ogg", "yoshi_yah_wah_hoo3.ogg"},
-            [CHAR_SOUND_HELLO] = "yoshi_hello.ogg"
+            [CHAR_SOUND_HELLO] = "yoshi_hello.ogg",
         },
+        anims = {
+            [CS_ANIM_MENU] = "cs_yoshi",
+        }
     },
     -----------
     -- Birdo --
