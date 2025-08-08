@@ -27,6 +27,24 @@ function geo_ball_switch(n)
     end
 end
 
+-- Mouth Switch --
+
+--- @param n GraphNode | FnGraphNode
+--- Switches the mouth state
+function geo_switch_mario_mouth(n)
+    local switch = cast_graph_node(n)
+    local m = geo_get_mario_state()
+end
+
+-- Mouth Side Switch --
+
+--- @param n GraphNode | FnGraphNode
+--- Switches the side that the mouth is being displayed on
+function geo_switch_mario_mouth_side(n)
+    local switch = cast_graph_node(n)
+    local m = geo_get_mario_state()
+end
+
 -- Wapeach Axe Acts --
 
 local sWapeachAxeActs = {

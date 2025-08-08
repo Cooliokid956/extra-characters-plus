@@ -490,7 +490,6 @@ end
 local breakableObjects = {
     id_bhvBreakableBox,
     id_bhvHiddenObject,
-    id_bhvJumpingBox,
 }
 
 --- @param o Object
@@ -684,12 +683,15 @@ local function act_homing_attack(m)
     local o = sonic_find_homing_target(m, 1000)
     local yaw, pitch
 
-    if o then
+    if o and sonic_is_obj_targetable(o) then
         yaw = obj_angle_to_object(m.marioObj, o)
-        pitch = sonic_pitch_to_object(m, o)
+        pitch = sonic_pitch_to_object(m, o) - degrees_to_sm64(5)
+        if o.collisionData then
+            pitch = sonic_pitch_to_object(m, o) + degrees_to_sm64(5)
+        end
     end
 
-    if m.actionTimer <= 0 then
+    if m.actionTimer == 0 then
         local totalVel = math.sqrt(m.forwardVel ^ 2 + m.vel.y ^ 2)
 
         if totalVel < 100 then
