@@ -130,13 +130,18 @@ local function sonic_update_air(m)
 
     local accel = 2
     local targetSpeed = dragThreshold
+    local fVel = math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2)
 
-    local airDrag = (realFVel / 0.32) / 512
+    local airDrag = (fVel / 0.32) / 512
 
     local intendedDYaw = m.faceAngle.y - speedAngle
     local intendedMag = m.intendedMag / 32
 
-    m.forwardVel = realFVel
+    if math.abs(intendedDYaw) > 0x4000 then
+        fVel = fVel * -1
+    end
+
+    m.forwardVel = fVel
 
     if m.pos.y < m.waterLevel then
         accel = 1
@@ -149,8 +154,8 @@ local function sonic_update_air(m)
                 targetSpeed = 0
                 accel = airDrag
             else
-                if realFVel > dragThreshold then
-                    targetSpeed = realFVel
+                if fVel > dragThreshold then
+                    targetSpeed = fVel
                 else
                     targetSpeed = dragThreshold
                 end
@@ -476,7 +481,6 @@ local SOUND_SONIC_HOMING  = audio_sample_load("sonic_homing_select.ogg")   -- Lo
 local sonicActionOverride = {
     [ACT_JUMP]         = ACT_SPIN_JUMP,
     [ACT_DOUBLE_JUMP]  = ACT_SPIN_JUMP,
-    [ACT_TRIPLE_JUMP]  = ACT_SPIN_JUMP,
     [ACT_BACKFLIP]     = ACT_SPIN_JUMP,
     [ACT_SIDE_FLIP]    = ACT_SPIN_JUMP,
     [ACT_STEEP_JUMP]   = ACT_SPIN_JUMP,
@@ -664,15 +668,15 @@ local function act_air_spin(m)
                 audio_sample_play(SOUND_SONIC_BOUNCE, m.pos, 1)
 
                 if m.actionTimer < 2 then
-                    m.vel.y = 30 * math.abs(m.forwardVel) / 24
+                    m.vel.y = 30 * math.abs(realFVel) / 24
 
-                    m.vel.x = math.abs(m.forwardVel / 2) * sins(wallAngle)
-                    m.vel.z = math.abs(m.forwardVel / 2) * coss(wallAngle)
+                    m.vel.x = math.abs(realFVel / 2) * sins(wallAngle)
+                    m.vel.z = math.abs(realFVel / 2) * coss(wallAngle)
                 else
-                    m.vel.y = 20 * math.abs(m.forwardVel) / 32
+                    m.vel.y = 20 * math.abs(realFVel) / 32
 
-                    m.vel.x = math.abs(m.forwardVel) * sins(wallAngle)
-                    m.vel.z = math.abs(m.forwardVel) * coss(wallAngle)
+                    m.vel.x = math.abs(realFVel) * sins(wallAngle)
+                    m.vel.z = math.abs(realFVel) * coss(wallAngle)
                 end
 
                 m.actionArg = 0
@@ -994,13 +998,24 @@ function on_set_sonic_action(m)
     if m.action == ACT_FREEFALL then
         set_mario_action(m, ACT_SONIC_FALL, m.actionArg)
     end
+
+    if m.action == ACT_TRIPLE_JUMP then
+        set_mario_action(m, ACT_SONIC_FALL, 3)
+    end
 end
 
 --- @param m MarioState
 function sonic_update(m)
     local e = gCharacterStates[m.playerIndex]
+    
+    local groundMovingActions = {
+        [ACT_SONIC_RUNNING] = 1,
+        [ACT_SPIN_DASH] = 1,
+        [ACT_DECELERATING] = 1,
+        [ACT_BUTT_SLIDE] = 1
+    }
 
-    if m.action == ACT_SONIC_RUNNING or m.action == ACT_SPIN_DASH then
+    if groundMovingActions[m.action] then
         e.sonic.groundYVel = -math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2) * sins(find_floor_slope(m, 0x8000))
     else
         e.sonic.groundYVel = 0
