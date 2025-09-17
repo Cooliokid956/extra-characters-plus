@@ -125,11 +125,11 @@ local function act_bomb_jump(m)
         play_character_sound_if_no_flag(m, CHAR_SOUND_YAHOO_WAHA_YIPPEE, MARIO_ACTION_SOUND_PLAYED)
         set_character_animation(m, CHAR_ANIM_FORWARD_SPINNING)
 
-        if m.vel.y <= -75 or m.health <= 0xFF then
+        if m.health <= 0xFF then
             m.actionState = 1
         end
     else
-        m.peakHeight = m.pos.y + 10000 -- hardest fall damage
+        m.peakHeight = m.pos.y + 10000 -- force falling sound
         play_far_fall_sound(m)
         set_character_animation(m, CHAR_ANIM_AIRBORNE_ON_STOMACH)
     end
@@ -137,9 +137,8 @@ local function act_bomb_jump(m)
     local result = perform_air_step(m, (m.actionState == 0 and AIR_STEP_CHECK_HANG | AIR_STEP_CHECK_LEDGE_GRAB) or 0)
     if result == AIR_STEP_LANDED then
         if m.actionState ~= 0 then
-            m.peakHeight = m.pos.y + 10000 -- force fall damage
-        end
-        if (check_fall_damage_or_get_stuck(m, ACT_HARD_FORWARD_GROUND_KB) == 0) then
+            set_mario_action(m, ACT_HARD_FORWARD_GROUND_KB, 0);
+        elseif (check_fall_damage_or_get_stuck(m, ACT_HARD_FORWARD_GROUND_KB) == 0) then
             set_mario_action(m, ACT_TRIPLE_JUMP_LAND, 0);
         end
     elseif result == AIR_STEP_HIT_WALL then
