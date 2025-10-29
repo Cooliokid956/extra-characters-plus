@@ -12,6 +12,10 @@ end
 -- Additional Voicelines used for Characters
 YOSHI_SOUND_FLUTTER = CHAR_SOUND_MAX + 1
 
+-- Edit Model for Sonic
+--local E_MODEL_SUPERSONIC = smlua_model_util_get_id("segasupersonic_geo"),
+
+
 -- Characters are stored in a table for ease of addition
 
 extraCharacters = {
@@ -639,7 +643,18 @@ extraCharacters = {
                 [SKIN]   = { r = 0xFE, g = 0xC1, b = 0x79 }, -- FEC179
                 [CAP]    = { r = 0x56, g = 0x8E, b = 0xFF }, -- 568EFF
                 [EMBLEM] = { r = 0xFF, g = 0xFF, b = 0x00 }  -- FFFF00
-            }
+            },
+            {
+                name = "Classic",
+                [PANTS]  = { r = 0xc3, g = 0x9e, b = 0x4e }, -- 0000FF
+                [SHIRT]  = { r = 0xf0, g = 0xf1, b = 0xdd }, -- 568EFF
+                [GLOVES] = { r = 0xff, g = 0xff, b = 0xff }, -- 613E21
+                [SHOES]  = { r = 0x72, g = 0x1c, b = 0x0e },
+                [HAIR]   = { r = 0x00, g = 0x00, b = 0x00 }, -- 000000
+                [SKIN]   = { r = 0xe9, g = 0xd9, b = 0xb0 }, -- FEC179
+                [CAP]    = { r = 0xc3, g = 0x9e, b = 0x4e }, -- 568EFF
+                [EMBLEM] = { r = 0x72, g = 0x1c, b = 0x0e }  -- FFFF00
+            },
         },
         voices = {
             [CHAR_SOUND_ATTACKED] = "foreman_spike_attacked.ogg",
@@ -715,7 +730,18 @@ extraCharacters = {
                 [SKIN]   = { r = 0xF8, g = 0xC1, b = 0xAC }, -- F8C1AC
                 [CAP]    = { r = 0xCF, g = 0x42, b = 0x39 }, -- CF4239
                 [EMBLEM] = { r = 0xFF, g = 0xFF, b = 0x00 }  -- FFFF00
-            }
+            },
+            {
+                name = "Classic",
+                [PANTS]  = { r = 0xff, g = 0x9f, b = 0xd5 }, -- CF4239
+                [SHIRT]  = { r = 0xff, g = 0x9f, b = 0xd5 }, -- CF4239
+                [GLOVES] = { r = 0xff, g = 0x9f, b = 0xd5 }, -- FFFF00
+                [SHOES]  = { r = 0xff, g = 0x00, b = 0x00 }, -- CF4239
+                [HAIR]   = { r = 0xfb, g = 0xe3, b = 0x4b }, -- 793127
+                [SKIN]   = { r = 0xf6, g = 0xe9, b = 0xb7 }, -- F8C1AC
+                [CAP]    = { r = 0xff, g = 0x9f, b = 0xd5 }, -- CF4239
+                [EMBLEM] = { r = 0xff, g = 0xff, b = 0xff }  -- FFFF00
+            },
         },
         voices = {
             [CHAR_SOUND_ATTACKED] = "pauline_attacked.ogg",
@@ -1239,7 +1265,7 @@ extraCharacters = {
         palettes = {
             {
                 name = "Default",
-                [PANTS]  = { r = 0xff, g = 0xff, b = 0x00 }, -- FFFF00
+                [PANTS]  = { r = 0x00, g = 0x00, b = 0xff }, -- FFFF00
                 [SHIRT]  = { r = 0xfe, g = 0xc1, b = 0x79 }, -- FEC179
                 [GLOVES] = { r = 0xff, g = 0xff, b = 0xff }, -- FFFFFF
                 [SHOES]  = { r = 0xff, g = 0x00, b = 0x00 }, -- FF0000
@@ -1256,8 +1282,8 @@ extraCharacters = {
                 [SHOES]  = { r = 0xff, g = 0x00, b = 0x00 }, -- FF0000
                 [HAIR]   = { r = 0xff, g = 0xff, b = 0x00 }, -- FFFF00
                 [SKIN]   = { r = 0xfe, g = 0xc1, b = 0x79 }, -- FEC179
-                [CAP]    = { r = 0x00, g = 0x00, b = 0xff }, -- 0000FF
-                [EMBLEM] = { r = 0x00, g = 0x00, b = 0xff }, -- 0000FF
+                [CAP]    = { r = 0xff, g = 0xff, b = 0x00 }, -- 0000FF
+                [EMBLEM] = { r = 0xff, g = 0xff, b = 0x00 }, -- 0000FF
             },
         },
         voices = {
@@ -1326,6 +1352,20 @@ extraCharacters = {
     },
 }
 
+-- Seperate palette for Super Sonic Model Edit
+--[[
+PALLETE_SUPERSONIC = {
+    [PANTS]  = { r = 0xff, g = 0xff, b = 0x00 }, -- FFFF00
+    [SHIRT]  = { r = 0xfe, g = 0xc1, b = 0x79 }, -- FEC179
+    [GLOVES] = { r = 0xff, g = 0xff, b = 0xff }, -- FFFFFF
+    [SHOES]  = { r = 0xff, g = 0x00, b = 0x00 }, -- FF0000
+    [HAIR]   = { r = 0xff, g = 0xff, b = 0x00 }, -- FFFF00
+    [SKIN]   = { r = 0xfe, g = 0xc1, b = 0x79 }, -- FEC179
+    [CAP]    = { r = 0xff, g = 0xff, b = 0x00 }, -- 0000FF
+    [EMBLEM] = { r = 0xff, g = 0xff, b = 0x00 }, -- 0000FF
+}
+]]
+
 local TEXT_VOICE_ACTOR = " (Voice Actors)"
 local TEXT_MOVESET     = " (Movesets)"
 
@@ -1345,6 +1385,9 @@ local function on_character_select_load()
         if i ~= 11 and anims then character_add_animations(model, anims, eyes) end
         -- if meter then character_add_health_meter(model, meter) end
     end
+
+    -- Super Sonic Palette
+    --character_add_palette_preset(E_MODEL_SUPERSONIC, PALLETE_SUPERSONIC, "Default")
 
     -- CoopDX Characters Voice Cast
     credit_add(TEXT_VANILLA_CAST..TEXT_VOICE_ACTOR, "Charles Martinet", "Mario")
