@@ -376,6 +376,20 @@ end
 --- @return integer
 function sonic_air_action_step(m, landAction, animation, stepArg, bonking)
     local stepResult = perform_air_step(m, stepArg)
+    local fVel = math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2)
+    local hSpeedAngle = atan2s(m.vel.z, m.vel.x)
+
+    local intendedDYaw = m.faceAngle.y - hSpeedAngle
+
+    if math.abs(intendedDYaw) > 0x4000 then
+        fVel = fVel * -1
+    end
+
+    local speedAngle = atan2s(m.vel.y, fVel)
+    local steepness = math.sqrt(m.floor.normal.x ^ 2 + m.floor.normal.z ^ 2)
+    local floorDYaw = m.floorAngle - m.faceAngle.y
+
+    --djui_chat_message_create(tostring(coss(floorDYaw)))
 
     if (m.action == ACT_BUBBLED and stepResult == AIR_STEP_HIT_LAVA_WALL) then
         stepResult = AIR_STEP_HIT_WALL
@@ -388,9 +402,13 @@ function sonic_air_action_step(m, landAction, animation, stepArg, bonking)
     if stepResult == AIR_STEP_LANDED then
 
         if (check_fall_damage_or_get_stuck(m, ACT_HARD_BACKWARD_GROUND_KB) == 0) then
-            if math.abs(m.forwardVel) > 1 then
+            if math.abs(m.forwardVel) > 1 or steepness ~= 0 then
                 m.faceAngle.y = atan2s(m.vel.z, m.vel.x)
                 mario_set_forward_vel(m, math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2))
+                if steepness ~= 0 then
+                    mario_set_forward_vel(m, m.forwardVel + math.abs(m.vel.y) * steepness * coss(floorDYaw))
+                end
+
                 return set_mario_action(m, ACT_SONIC_RUNNING, 0)
             else
                 m.faceAngle.y = m.faceAngle.y
