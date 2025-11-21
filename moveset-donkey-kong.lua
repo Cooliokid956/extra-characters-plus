@@ -4,8 +4,8 @@
 
 if not charSelect then return end
 
-local DONKEY_KONG_ROLL_SPEED = 50
-local DONKEY_KONG_ROLL_TIME = 15
+DONKEY_KONG_ROLL_SPEED = 50
+DONKEY_KONG_ROLL_TIME = 15
 
 --- @param m MarioState
 --- Applies gravity to donkey kong
@@ -52,7 +52,7 @@ function perform_donkey_kong_air_step(m, stepArg)
 
     m.wall = nil
 
-    for i = 0, 4 do
+    for i = 0, 3 do
         local step = gVec3fZero()
         step = {
             x = m.vel.x / 4.0,
@@ -102,7 +102,7 @@ function perform_donkey_kong_air_step(m, stepArg)
     return stepResult
 end
 
-function before_donkey_kong_phys_step(m, stepType, stepArg)
+function donkey_kong_before_phys_step(m, stepType, stepArg)
     if stepType == STEP_TYPE_GROUND then
         -- return perform_donkey_kong_ground_step(m) -- TBA
     elseif stepType == STEP_TYPE_AIR then
@@ -114,11 +114,25 @@ function before_donkey_kong_phys_step(m, stepType, stepArg)
     end
 end
 
-function donkey_kong_before_action(m, action)
+function donkey_kong_before_action(m, action, actionArg)
     if (action == ACT_DIVE or action == ACT_MOVE_PUNCHING) and m.action & ACT_FLAG_AIR == 0 and m.forwardVel > 20 then
         mario_set_forward_vel(m, math.min(m.forwardVel - 32 + DONKEY_KONG_ROLL_SPEED, DONKEY_KONG_ROLL_SPEED))
         m.vel.y = 20
         return ACT_DONKEY_KONG_ROLL
+    elseif (action == ACT_PUNCHING and actionArg == 9) then
+        return ACT_DONKEY_KONG_POUND
+    end
+end
+
+function donkey_kong_on_interact(m, o, type, value)
+    -- allow donkey kong to grab objects with the roll
+    if type == INTERACT_GRABBABLE and m.action == ACT_DONKEY_KONG_ROLL then
+        if ((o.oInteractionSubtype & INT_SUBTYPE_NOT_GRABBABLE) == 0) then
+            m.interactObj = o
+            m.input = m.input | INPUT_INTERACT_OBJ_GRABBABLE
+            if (o.oSyncID ~= 0) then network_send_object(o, false) end
+            return 1
+        end
     end
 end
 
@@ -139,23 +153,34 @@ function on_attack_object(m, o, interaction)
 end
 hook_event(HOOK_ON_ATTACK_OBJECT, on_attack_object)
 
-_G.ACT_DONKEY_KONG_ROLL = allocate_mario_action(ACT_GROUP_MOVING | ACT_FLAG_MOVING)
-_G.ACT_DONKEY_KONG_ROLL_AIR = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_AIR | ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION)
+_G.ACT_DONKEY_KONG_ROLL = allocate_mario_action(ACT_GROUP_MOVING | ACT_FLAG_ATTACKING | ACT_FLAG_MOVING)
+_G.ACT_DONKEY_KONG_ROLL_AIR = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_ATTACKING | ACT_FLAG_AIR | ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION)
+_G.ACT_DONKEY_KONG_POUND = allocate_mario_action(ACT_GROUP_STATIONARY | ACT_FLAG_ATTACKING)
+_G.ACT_DONKEY_KONG_POUND_HIT = allocate_mario_action(ACT_GROUP_STATIONARY | ACT_FLAG_ATTACKING)
 
 ---@param m MarioState
 local function act_donkey_kong_roll(m)
     if (not m) then return 0 end
 
-    if (should_begin_sliding(m)) ~= 0 then
+    if (mario_floor_is_steep(m)) ~= 0 then
         return set_mario_action(m, ACT_BEGIN_SLIDING, 0)
     end
 
+    if mario_check_object_grab(m) ~= 0 then
+        set_character_animation(m, CHAR_ANIM_FIRST_PUNCH)
+        set_anim_to_frame(m, 2)
+        return 1
+    end
+
     if (m.input & INPUT_A_PRESSED) ~= 0 then
+        m.faceAngle.x = 0
+        m.marioObj.header.gfx.angle.x = m.faceAngle.x
         local result = set_jumping_action(m, ACT_JUMP, 0)
         m.forwardVel = m.forwardVel / 0.8
         return result
     end
 
+    local doSpinAnim = false
     m.actionTimer = m.actionTimer + 1
     if m.actionTimer > DONKEY_KONG_ROLL_TIME and m.actionArg ~= 0 then
         -- ending animation
@@ -166,11 +191,12 @@ local function act_donkey_kong_roll(m)
         if is_anim_at_end(m) ~= 0 then
             m.actionArg = 0
         end
-    elseif set_mario_anim_with_accel(m, MARIO_ANIM_FORWARD_SPINNING, m.forwardVel * 0x1000) == 0 then
-        play_sound(SOUND_ACTION_SPIN, m.marioObj.header.gfx.cameraToObject)
+    else
+        doSpinAnim = true
+        if m.actionTimer % 4 == 0 then
+            play_sound(SOUND_ACTION_SPIN, m.marioObj.header.gfx.cameraToObject)
+        end
     end
-
-    --set_mario_action(m, ACT_DIVE, m.forwardVel * 0x1000) == 0
     
     local result = perform_ground_step(m)
     if result == GROUND_STEP_LEFT_GROUND then
@@ -182,6 +208,12 @@ local function act_donkey_kong_roll(m)
             slide_bonk(m, ACT_GROUND_BONK, ACT_WALKING)
             return
         end
+    end
+
+    if doSpinAnim then
+        m.faceAngle.x = m.faceAngle.x + 0x100 * m.forwardVel
+        m.marioObj.header.gfx.angle.x = m.faceAngle.x
+        m.marioObj.header.gfx.pos.y = m.marioObj.header.gfx.pos.y + 50 -- remove after roll state is fixed
     end
 
     -- end roll earlier from falls and after hitting an enemy
@@ -200,13 +232,15 @@ local function act_donkey_kong_roll_air(m)
 
     if (m.input & INPUT_A_PRESSED) ~= 0 then
         m.terrainSoundAddend = 0
+        m.faceAngle.x = 0
+        m.marioObj.header.gfx.angle.x = m.faceAngle.x
         local result = set_mario_action(m, ACT_JUMP, 0)
         m.forwardVel = m.forwardVel / 0.8
         return result
     end
 
     m.actionTimer = m.actionTimer + 1
-    if set_mario_anim_with_accel(m, MARIO_ANIM_FORWARD_SPINNING, m.forwardVel * 0x1000) == 0 then
+    if m.actionTimer % 4 == 0 then
         play_sound(SOUND_ACTION_SPIN, m.marioObj.header.gfx.cameraToObject)
     end
 
@@ -233,6 +267,9 @@ local function act_donkey_kong_roll_air(m)
         lava_boost_on_wall(m)
         return 1
     end
+    m.faceAngle.x = m.faceAngle.x + 0x100 * m.forwardVel
+    m.marioObj.header.gfx.angle.x = m.faceAngle.x
+    m.marioObj.header.gfx.pos.y = m.marioObj.header.gfx.pos.y + 50 -- remove after roll state is fixed
 
     if m.actionTimer > DONKEY_KONG_ROLL_TIME then
         return set_mario_action(m, ACT_FREEFALL, 0)
@@ -242,3 +279,48 @@ local function act_donkey_kong_roll_air(m)
 end
 
 hook_mario_action(ACT_DONKEY_KONG_ROLL_AIR, { every_frame = act_donkey_kong_roll_air }, INT_FAST_ATTACK_OR_SHELL)
+
+local function act_donkey_kong_pound(m)
+    if (not m) then return 0 end
+
+    mario_set_forward_vel(m, 0)
+    if (mario_floor_is_steep(m)) ~= 0 then
+        return set_mario_action(m, ACT_BEGIN_SLIDING, 0)
+    end
+
+    if (m.input & INPUT_A_PRESSED) ~= 0 then
+        local result = set_jumping_action(m, ACT_JUMP, 0)
+        return result
+    elseif (m.input & INPUT_B_PRESSED) ~= 0 and m.actionTimer ~= 0 then
+        m.actionState = 1
+    end
+
+    m.actionTimer = m.actionTimer + 1
+    if m.actionTimer == 4 then
+        play_mario_heavy_landing_sound(m, SOUND_ACTION_TERRAIN_HEAVY_LANDING)
+        set_mario_particle_flags(m, (PARTICLE_MIST_CIRCLE | PARTICLE_HORIZONTAL_STAR), 0)
+        m.action = ACT_DONKEY_KONG_POUND_HIT
+    elseif m.action == ACT_DONKEY_KONG_POUND_HIT then
+        m.action = ACT_DONKEY_KONG_POUND
+    elseif m.actionTimer >= 8 then
+        if m.actionState ~= 0 then
+            -- pound again
+            m.actionTimer = 0
+            m.actionState = 0
+            set_anim_to_frame(m, 0)
+        elseif m.input & INPUT_Z_DOWN ~= 0 then
+            set_mario_action(m, ACT_START_CROUCHING, 0)
+        else
+            set_mario_action(m, ACT_IDLE, 0)
+        end
+    end
+
+    set_character_anim_with_accel(m, CHAR_ANIM_PLACE_LIGHT_OBJ, 0x20000)
+    local result = perform_ground_step(m)
+    if result == GROUND_STEP_LEFT_GROUND then
+        return set_mario_action(m, ACT_FREEFALL, 0)
+    end
+end
+hook_mario_action(ACT_DONKEY_KONG_POUND, { every_frame = act_donkey_kong_pound })
+
+hook_mario_action(ACT_DONKEY_KONG_POUND_HIT, { every_frame = act_donkey_kong_pound }, INT_GROUND_POUND) -- same action but with ground pound interaction

@@ -223,7 +223,10 @@ end
 
 -- Donkey Kong Angry Acts --
 
-local sDonkeyKongAngryActs = {}
+local sDonkeyKongAngryActs = {
+    [ACT_DONKEY_KONG_POUND] =     true,
+    [ACT_DONKEY_KONG_POUND_HIT] = true,
+}
 
 --- @param n GraphNode | FnGraphNode
 --- Switches between normal head and angry head during angry actions
@@ -237,19 +240,19 @@ function geo_custom_dk_head_switch(n)
     end
 end
 
---[[]
 local sDonkeyKongRollActs = {
-    [ACT_DIVE]        = true,
+    [ACT_DONKEY_KONG_ROLL] =     true,
+    [ACT_DONKEY_KONG_ROLL_AIR] = true,
 }
-]]
 
 --- @param n GraphNode | FnGraphNode
 --- Switches between the spin and main model.
-function geo_dkroll_switch(n)
+function custom_dkroll_switch(n)
     local switch = cast_graph_node(n)
     local m = geo_get_mario_state()
 
-    if sDonkeyKongRollActs[m.action] then
+    if sDonkeyKongRollActs[m.action] and (m.action ~= ACT_DONKEY_KONG_ROLL or
+    m.actionTimer <= DONKEY_KONG_ROLL_TIME or m.actionArg == 0) then
         switch.selectedCase = 1
     else
         switch.selectedCase = 0
