@@ -292,7 +292,7 @@ local axeOverrides = {
 ---@param action integer
 function wapeach_before_action(m, action, actionArg)
     if axeOverrides[action] then
-        if action == ACT_PUNCHING and actionArg == 9 then return end
+        if (action == ACT_PUNCHING or action == ACT_MOVE_PUNCHING) and actionArg ~= 9 then return end
         return axeOverrides[action]
     end
 end
