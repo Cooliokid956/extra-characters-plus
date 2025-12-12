@@ -1633,7 +1633,7 @@ extraCharacters = {
             [CHAR_ANIM_PULL_DOOR_WALK_IN] = 'donkey_5F_pull_door_walk_in',
             [CHAR_ANIM_STOP_SKID] = 'donkey_10_stop_skid',
             [CHAR_ANIM_SHIVERING_WARMING_HAND] = 'donkey_19_shivering_warming_hand',
-            [CHAR_ANIM_CREDITS_RAISE_HAND] = 'donkey_20_credits_raide_hand',
+            --[CHAR_ANIM_CREDITS_RAISE_HAND] = 'donkey_20_credits_raide_hand',
             [CHAR_ANIM_CREDITS_TAKE_OFF_CAP] = 'donkey_22_credits_take_off_cap',
             [CHAR_ANIM_STAND_UP_FROM_LAVA_BOOST] = 'donkey_28_standup_from_lava_boost',
             [CHAR_ANIM_LAND_ON_STOMACH] = 'donkey_2c_land_on_stomach',
@@ -1687,6 +1687,8 @@ extraCharacters = {
             [CHAR_ANIM_PUSH_DOOR_WALK_IN] = 'donkey_60_pushdoor',
             [CHAR_ANIM_START_TIPTOE] = 'donkey_CA_starttiptoe',
             [CHAR_ANIM_TIPTOE] = 'donkey_92_tiptoe',
+            [CHAR_ANIM_UNLOCK_DOOR] = 'donkey_61_unlock_door',
+
             [CS_ANIM_MENU] = 'cs_donkey',
         },
     },
