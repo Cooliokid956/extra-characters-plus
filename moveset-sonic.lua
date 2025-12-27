@@ -1270,7 +1270,7 @@ local badnikBounceActions = {
 }
 
 function sonic_on_interact(m, o, intType)
-    if (m.action == ACT_SONIC_RUNNING) and not m.heldObj then
+    if (m.action == ACT_SONIC_RUNNING) and not m.heldObj and m.pos.y - 30 >= m.waterLevel then
         if obj_has_behavior_id(o, id_bhvDoorWarp) ~= 0 then
             set_mario_action(m, ACT_DECELERATING, 0)
             interact_warp_door(m, 0, o)
