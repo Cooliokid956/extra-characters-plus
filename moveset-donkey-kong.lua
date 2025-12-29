@@ -536,7 +536,7 @@ function act_donkey_climb(m)
         if m.actionTimer <= DONKEY_KONG_SLIP_TIME then
             mario_set_forward_vel(m, m.controller.stickX/3)
             m.vel.y = m.controller.stickY/3
-        elseif m.actionTimer <= DK_SLIDE_TIME then -- Slip on wall after some time
+        elseif m.actionTimer <= DONKEY_KONG_SLIDE_TIME then -- Slip on wall after some time
             climbAnimSpeed = 32
             m.vel.y = 0
         else
