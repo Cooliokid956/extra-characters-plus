@@ -31,7 +31,6 @@ local RING_METER_VISIBLE = 4
 --- @param m MarioState
 --- @param accel number
 --- @param lossFactor number
---- Not used yet.
 local function update_spin_dash_angle(m, accel, lossFactor)
     local newFacingDYaw
     local facingDYaw
@@ -141,7 +140,7 @@ end
 
 --- @param m MarioState
 local function sonic_update_air(m)
-    local dragThreshold = 32
+    local dragThreshold = 64
     local speedAngle = atan2s(m.vel.z, m.vel.x)
 
     local accel = 2
@@ -165,6 +164,13 @@ local function sonic_update_air(m)
 
         if (m.input & INPUT_NONZERO_ANALOG) ~= 0 then
             m.faceAngle.y = m.intendedYaw
+
+            -- Wing Cap acting like Speed Shoes.
+            if (m.flags & MARIO_WING_CAP) ~= 0 then
+                dragThreshold = dragThreshold * 2
+                accel = accel * 2
+            end
+
             if fVel > dragThreshold then
                 targetSpeed = fVel
             else
@@ -175,14 +181,14 @@ local function sonic_update_air(m)
             m.vel.z = approach_f32_symmetric(m.vel.z, targetSpeed * coss(m.intendedYaw) * intendedMag, accel)
         end
 
-        local airDrag = (math.abs(fVel) / 0.125) / 256
-
-        if m.vel.y > 0 and m.vel.y < 32 then
-            m.vel.x = approach_f32_symmetric(m.vel.x, 0, airDrag)
-            m.vel.z = approach_f32_symmetric(m.vel.z, 0, airDrag)
-        end
-
         --djui_chat_message_create(tostring(math.abs(speed) * sins(m.intendedYaw) * intendedMag))
+    end
+
+    local airDrag = (math.abs(fVel) / 0.125) / 256
+
+    if m.vel.y > 0 and m.vel.y < 32 then
+        m.vel.x = approach_f32_symmetric(m.vel.x, 0, airDrag)
+        m.vel.z = approach_f32_symmetric(m.vel.z, 0, airDrag)
     end
 end
 
@@ -207,6 +213,12 @@ local function update_sonic_running_speed(m)
     if m.pos.y < m.waterLevel then
         targetSpeed = targetSpeed / 2
         accel = 1.025
+    end
+
+    -- Wing Cap acting like Speed Shoes.
+    if (m.flags & MARIO_WING_CAP) ~= 0 then
+        targetSpeed = targetSpeed * 2
+        accel = accel * 2
     end
 
     if (m.quicksandDepth > 10.0) then
@@ -601,6 +613,15 @@ local function perform_sonic_a_action(m)
     local o = sonic_find_homing_target(m, 700)
     local dist = dist_between_objects(m.marioObj, o)
     local e = gCharacterStates[m.playerIndex]
+    
+    local fVel = math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2)
+    local hSpeedAngle = atan2s(m.vel.z, m.vel.x)
+
+    local intendedDYaw = m.faceAngle.y - hSpeedAngle
+
+    if math.abs(intendedDYaw) > 0x4000 then
+        fVel = fVel * -1
+    end
 
     if m.pos.y < m.waterLevel then
         m.action = ACT_SPIN_JUMP
@@ -611,7 +632,15 @@ local function perform_sonic_a_action(m)
             if o and dist < 1000 then
                 return set_mario_action(m, ACT_HOMING_ATTACK, 0)
             else
-                return set_mario_action(m, ACT_AIR_SPIN, 1)
+                if (m.flags & MARIO_WING_CAP) ~= 0 and fVel > 110 then
+                    set_mario_particle_flags(m, PARTICLE_VERTICAL_STAR, 0)
+                    play_sound(SOUND_OBJ_POUNDING_CANNON, m.marioObj.header.gfx.cameraToObject)
+                    play_sound(SOUND_ACTION_FLYING_FAST, m.marioObj.header.gfx.cameraToObject)
+                    cur_obj_shake_screen(SHAKE_POS_LARGE)
+                    set_mario_action(m, ACT_FLYING, 0)
+                else
+                    return set_mario_action(m, ACT_AIR_SPIN, 1)
+                end
             end
         end
     end
