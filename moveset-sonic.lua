@@ -8,7 +8,9 @@ local TEX_SONIC_RING_METER = get_texture_info("char-select-sonic-ring-meter")
 local prevVelY
 local prevHeight
 
-local rings = 0
+for i = 0, MAX_PLAYERS - 1 do
+    gPlayerSyncTable[i].rings = 0
+end
 
 local physTimer = 0
 local lastforwardPos = gVec3fZero()
@@ -932,7 +934,7 @@ local function act_spin_dash(m)
         
     elseif stepResult == GROUND_STEP_HIT_WALL then
         if m.forwardVel > 16 then
-            set_mario_particle_flags(m, ACTIVE_PARTICLE_H_STAR, 0)
+            set_mario_particle_flags(m, PARTICLE_VERTICAL_STAR, 0)
             return slide_bonk(m, ACT_GROUND_BONK, ACT_GROUND_BONK)
         else
             return set_mario_action(m, ACT_CROUCHING, 0)
@@ -1126,10 +1128,10 @@ function before_set_sonic_action(m, action, actionArg)
 end
 
 
-local prevRings = rings
+local prevRings = gPlayerSyncTable[0].rings
 function on_set_sonic_action(m)
     if m.action == ACT_BURNING_JUMP then
-        prevRings = rings
+        prevRings = gPlayerSyncTable[0].rings
     end
 
     if m.faceAngle.x ~= 0 then
@@ -1236,7 +1238,9 @@ function sonic_update(m)
 		end
     end
 
-    sonic_drowning(m, e)
+    if m.health > 0x000 or m.action ~= ACT_BUBBLED then
+        sonic_drowning(m, e)
+    end
     sonic_ring_health(m, e)
     
     e.sonic.instashieldTimer = e.sonic.instashieldTimer - 1
@@ -1245,7 +1249,7 @@ end
 function sonic_things_for_non_sonic_chars(m)
     -- Clear rings even when you're not Sonic.
     if m.hurtCounter > 0 then
-        rings = 0
+        gPlayerSyncTable[0].rings = 0
     end
 
     -- Reenable the vanilla power meter when the moveset is off.
@@ -1300,14 +1304,14 @@ function sonic_ring_health(m, e)
 
     --djui_chat_message_create(tostring(realFlingFactor))
 
-    --if (m.controller.buttonPressed & X_BUTTON) ~= 0 then rings = rings + 20 end
+    --if (m.controller.buttonPressed & X_BUTTON) ~= 0 then gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + 20 end
 
     if m.hurtCounter > 0 then
-        if rings > 32 then rings = 32 end
+        if gPlayerSyncTable[0].rings > 32 then gPlayerSyncTable[0].rings = 32 end
         m.hurtCounter = 0
             
-        if rings > 0 then
-  		    for i = 0,rings -1,1 do
+        if gPlayerSyncTable[0].rings > 0 then
+  		    for i = 0,gPlayerSyncTable[0].rings -1,1 do
             spawn_sync_object(
                 id_bhvSonicRing,
                 E_MODEL_YELLOW_COIN,
@@ -1325,7 +1329,7 @@ function sonic_ring_health(m, e)
 
         if timeBetweenDamages > 0 then flingFactor = flingFactor + 1 end
 
-        rings = 0
+        gPlayerSyncTable[0].rings = 0
         timeBetweenDamages = 240
     end
 
@@ -1341,7 +1345,7 @@ function sonic_ring_health(m, e)
         if prevRings > 0 then
             m.health = 0x16000
         end          
-        if rings > 0 then
+        if gPlayerSyncTable[0].rings > 0 then
             spawn_sync_object(
                 id_bhvSonicRing,
                 E_MODEL_YELLOW_COIN,
@@ -1352,7 +1356,7 @@ function sonic_ring_health(m, e)
                     o.oMoveAngleYaw = m.faceAngle.y + 0x8000 + degrees_to_sm64(math.random(-30, 30))
                     o.oTimer = 100
                 end)
-            rings = rings - 1
+            gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings - 1
         end
 
         if m.action == ACT_BURNING_JUMP then
@@ -1371,7 +1375,7 @@ function sonic_value_refresh(m)
     local e = gCharacterStates[m.playerIndex]
     e.sonic.oxygenTimer = 30
     e.sonic.oxygen = 30
-    rings = 0
+    gPlayerSyncTable[0].rings = 0
     RingMeterHUD.animation = RING_METER_HIDDEN
 end
 
@@ -1654,7 +1658,7 @@ local prevTarget
 function sonic_hud_stuff()
     sonic_homing_hud()
     if obj_get_first_with_behavior_id(id_bhvActSelector) == nil then
-        sonic_ring_display()
+        sonic_ring_display(gPlayerSyncTable[0].rings)
     end
 end
 
@@ -1699,7 +1703,7 @@ end
 local flashTimer = 0
 local flash = 0
 
-function sonic_ring_display()
+function sonic_ring_display(rings)
     local varRings = tostring(rings)
 	
     djui_hud_set_font(FONT_RECOLOR_HUD)
@@ -1723,7 +1727,7 @@ function sonic_ring_display()
     elseif RingMeterHUD.animation ==  RING_METER_HIDING then
         sonic_ring_display_hiding(RingMeterHUD)
     elseif RingMeterHUD.animation ==  RING_METER_VISIBLE then
-        sonic_ring_display_visible(RingMeterHUD)
+        sonic_ring_display_visible(RingMeterHUD, gPlayerSyncTable[0].rings)
     end
 
     if RingMeterHUD.animation == 0 and rings > 0 then
@@ -1784,7 +1788,7 @@ function sonic_ring_display_hiding(h)
     if h.y < -20 then h.animation = RING_METER_HIDDEN end
 end
 
-function sonic_ring_display_visible(h)
+function sonic_ring_display_visible(h, rings)
     h.y = 33
 
     if h.visibleTimer >= 90 then
@@ -1890,11 +1894,11 @@ end
 function ringteract(m, o, intType) -- This is the ring interaction for ALL characters.
     if obj_has_behavior_id(o, id_bhvSonicRing) ~= 0 then
         m.healCounter = 4
-        rings = rings + 1
+        gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + 1
     end
 
 	if intType == INTERACT_COIN then
-		rings = rings + o.oDamageOrCoinValue
+		gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + o.oDamageOrCoinValue
 		--m.healCounter = 0
     end
 end
