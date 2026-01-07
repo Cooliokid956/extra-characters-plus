@@ -902,7 +902,6 @@ local function cappy_process_mario_interactions(cappy)
     if cappy_mario_can_bounce() then
         local marioObj = m0.marioObj
         obj_set_pos(marioObj, m0.pos.x, m0.pos.y, m0.pos.z)
-        marioObj.hitboxRadius = 50
         local obj = obj_get_first_with_behavior_id(id_bhvCappy)
         while obj ~= nil do
             if (obj.oSubAction == 1 and         -- Cappy is spawned
@@ -918,7 +917,12 @@ local function cappy_process_mario_interactions(cappy)
                 if (marioObj.oIntangibleTimer == 0 or mAction == ACT_BUBBLED) then
 
                     -- Check hitbox overlap
-                    if obj_check_hitbox_overlap(marioObj, obj) then
+                    local marioHitboxRadius = marioObj.hitboxRadius
+                    marioObj.hitboxRadius = 50
+                    local hitboxOverlap = obj_check_hitbox_overlap(marioObj, obj)
+                    marioObj.hitboxRadius = marioHitboxRadius
+
+                    if hitboxOverlap then
                         local marioGfx = marioObj.header.gfx
 
                         -- Pop bubble
@@ -1301,7 +1305,6 @@ function pauline_update(m)
                     end
                 end
                 cappy_process_mario_interactions(cappy)
-                m.marioObj.hitboxRadius = 37
             end
 
             -- Process Cappy events

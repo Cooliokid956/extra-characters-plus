@@ -133,6 +133,7 @@ local function perform_donkey_kong_air_quarter_step(m, intendedPos, stepArg)
     local ceilHeight
     local floorHeight
     local waterLevel
+    local tempWcd
 
     vec3f_copy(nextPos, intendedPos)
 
@@ -141,13 +142,13 @@ local function perform_donkey_kong_air_quarter_step(m, intendedPos, stepArg)
     -- Fortunately, it's read-write, so we can turn it into a table for the Lua part of the function and
     -- turn it back into a WallCollisionData object for the C function calls
 
-    local upperWcdTmp = collision_get_temp_wall_collision_data()
-    resolve_and_return_wall_collisions_data(nextPos, 150.0, 50.0, upperWcdTmp)
-    local upperWcd = wcd_to_table(upperWcdTmp)
+    tempWcd = collision_get_temp_wall_collision_data()
+    resolve_and_return_wall_collisions_data(nextPos, 150.0, 50.0, tempWcd)
+    local upperWcd = wcd_to_table(tempWcd)
 
-    local lowerWcdTmp = collision_get_temp_wall_collision_data()
-    resolve_and_return_wall_collisions_data(nextPos, 30.0, 50.0, lowerWcdTmp)
-    local lowerWcd = wcd_to_table(lowerWcdTmp)
+    tempWcd = collision_get_temp_wall_collision_data()
+    resolve_and_return_wall_collisions_data(nextPos, 30.0, 50.0, tempWcd)
+    local lowerWcd = wcd_to_table(tempWcd)
 
     floorHeight, floor = find_floor(nextPos.x, nextPos.y, nextPos.z)
     ceilHeight, ceil = vec3f_mario_ceil(nextPos, floorHeight)
@@ -242,9 +243,9 @@ local function perform_donkey_kong_air_quarter_step(m, intendedPos, stepArg)
     m.floorHeight = floorHeight
 
     if upperWcd.numWalls > 0 then
-        table_to_wcd(upperWcdTmp, upperWcd)
-        mario_update_wall(m, upperWcdTmp)
-        upperWcd = wcd_to_table(upperWcdTmp)
+        table_to_wcd(tempWcd, upperWcd)
+        mario_update_wall(m, tempWcd)
+        upperWcd = wcd_to_table(tempWcd)
 
         for i = 1, upperWcd.numWalls do
             if gLevelValues.fixCollisionBugs == 0 then
@@ -266,9 +267,9 @@ local function perform_donkey_kong_air_quarter_step(m, intendedPos, stepArg)
             end
         end
     elseif lowerWcd.numWalls > 0 then
-        table_to_wcd(lowerWcdTmp, lowerWcd)
-        mario_update_wall(m, lowerWcdTmp)
-        lowerWcd = wcd_to_table(lowerWcdTmp)
+        table_to_wcd(tempWcd, lowerWcd)
+        mario_update_wall(m, tempWcd)
+        lowerWcd = wcd_to_table(tempWcd)
 
         for i = 1, lowerWcd.numWalls do
             if gLevelValues.fixCollisionBugs == 0 then
