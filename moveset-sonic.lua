@@ -806,10 +806,14 @@ local function act_homing_attack(m)
 
     if o and sonic_is_obj_targetable(o) then
         yaw = obj_angle_to_object(m.marioObj, o)
-        pitch = sonic_pitch_to_object(m, o) - degrees_to_sm64(5)
+        pitch = sonic_pitch_to_object(m, o) - degrees_to_sm64(3)
         if o.collisionData then
             pitch = sonic_pitch_to_object(m, o) + degrees_to_sm64(5)
         end
+
+        m.vel.y = math.abs(m.forwardVel) * sins(-pitch)
+        m.vel.x = math.abs(m.forwardVel) * sins(yaw) * coss(pitch)
+        m.vel.z = math.abs(m.forwardVel) * coss(yaw) * coss(pitch)
     end
 
     if m.actionTimer <= 0 then
@@ -817,15 +821,11 @@ local function act_homing_attack(m)
         m.particleFlags = m.particleFlags + PARTICLE_VERTICAL_STAR
         local totalVel = math.sqrt(m.forwardVel ^ 2 + m.vel.y ^ 2)
 
-        if totalVel < 100 then
-            m.forwardVel = 100
-        elseif totalVel >= 100 and totalVel < 172 then
+        if totalVel < 80 then
+            m.forwardVel = 80
+        elseif totalVel >= 80 and totalVel < 172 then
             m.forwardVel = totalVel + 20
         end
-
-        m.vel.y = math.abs(m.forwardVel) * sins(-pitch)
-        m.vel.x = math.abs(m.forwardVel) * sins(yaw) * coss(pitch)
-        m.vel.z = math.abs(m.forwardVel) * coss(yaw) * coss(pitch)
 
         m.faceAngle.y = yaw
     end
@@ -836,25 +836,30 @@ local function act_homing_attack(m)
 
     local stepResult = perform_air_step(m, 0)
     if stepResult == AIR_STEP_LANDED then
-        if (m.controller.buttonDown & Z_TRIG) ~= 0 then
-            audio_sample_play(SOUND_ROLL, m.pos, 1)
-            set_mario_action(m, ACT_SPIN_DASH, 0)
+        if m.floor.object == o and o.oInteractType == INTERACT_BREAKABLE then
+            m.vel.y = math.abs(m.vel.y)
+            o.oInteractStatus = ATTACK_GROUND_POUND_OR_TWIRL + (INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED)
+            set_mario_action(m, ACT_SONIC_FALL, 3)
         else
+            if (m.controller.buttonDown & Z_TRIG) ~= 0 then
+                audio_sample_play(SOUND_ROLL, m.pos, 1)
+                set_mario_action(m, ACT_SPIN_DASH, 0)
+            else
 
-            if (check_fall_damage_or_get_stuck(m, ACT_HARD_BACKWARD_GROUND_KB) == 0) then
-                m.faceAngle.y = atan2s(m.vel.z, m.vel.x)
-                mario_set_forward_vel(m, math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2))
-                set_mario_action(m, ACT_SONIC_RUNNING, 0)
+                if (check_fall_damage_or_get_stuck(m, ACT_HARD_BACKWARD_GROUND_KB) == 0) then
+                    m.faceAngle.y = atan2s(m.vel.z, m.vel.x)
+                    mario_set_forward_vel(m, math.sqrt(m.vel.x ^ 2 + m.vel.z ^ 2))
+                    set_mario_action(m, ACT_SONIC_RUNNING, 0)
+                end
             end
         end
-
     end
 
     m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
     m.marioObj.header.gfx.angle.x = m.faceAngle.x
 
     if o == nil then
-        set_mario_action(m, ACT_AIR_SPIN, 0)
+        set_mario_action(m, ACT_SONIC_FALL, 3)
         e.actionADone = true
     end
 
