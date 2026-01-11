@@ -845,7 +845,7 @@ local function act_homing_attack(m)
 
     elseif stepResult == AIR_STEP_HIT_WALL then
         -- A failsafe in case the homing attack doesn't break boxes for some godforsaken reason.
-        if m.wall.object ~= nil and m.wall.object.oInteractType == INTERACT_BREAKABLE then
+        if m.wall ~= nil and m.wall.object ~= nil and m.wall.object.oInteractType == INTERACT_BREAKABLE then
             m.vel.x = sins(m.faceAngle.y) * -16
             m.vel.z = coss(m.faceAngle.y) * -16
             if m.playerIndex == 0 then set_camera_shake_from_hit(SHAKE_ATTACK) end
@@ -1250,10 +1250,10 @@ function sonic_update(m)
         end
     end
 
-    if m.health > 0xFF or m.action ~= ACT_BUBBLED or (m.action & ACT_GROUP_CUTSCENE) == 0 then
+    if m.health > 0xFF and m.action ~= ACT_BUBBLED and (m.action & ACT_GROUP_CUTSCENE) == 0 then
         sonic_drowning(m, e)
     end
-    
+
     sonic_ring_health(m, e)
 
     e.sonic.instashieldTimer = e.sonic.instashieldTimer - 1
@@ -1495,7 +1495,6 @@ function sonic_on_interact(m, o, intType)
     end
 
     if bounceTypes[intType] and (o.oInteractionSubtype & INT_SUBTYPE_TWIRL_BOUNCE) == 0 then
-        local e = gCharacterStates[m.playerIndex]
         if e.sonic.prevVelY < 0 and m.pos.y > o.oPosY then
             if badnikBounceActions[m.action] then
                 if m.action == ACT_GROUND_POUND then
@@ -1519,7 +1518,7 @@ function sonic_on_interact(m, o, intType)
     end
 
     if intType == INTERACT_STAR_OR_KEY then
-        if m.playerIndex == 0 then e.sonic.oxygen = 900 end
+        e.sonic.oxygen = 900
     end
 end
 
@@ -1763,11 +1762,23 @@ function sonic_homing_hud()
             end
         else
             homingCursorScaleTimer = 0
+            homingCursorPrevScale = 1
             homingCursorPrevTarget = nil
         end
     else
         homingCursorScaleTimer = 0
+        homingCursorPrevScale = 1
         homingCursorPrevTarget = nil
+    end
+
+    -- If not in a homing state, set the homing cursor previous pos on Sonic
+    -- It will make the cursor smoothly move from Sonic instead of out of nowhere
+    if homingCursorPrevTarget == nil then
+        local hudPos = gVec3fZero()
+        local onScreen = djui_hud_world_pos_to_screen_pos(m.pos, hudPos)
+        if onScreen then
+            vec3f_copy(homingCursorPrevHudPos, hudPos)
+        end
     end
 end
 
@@ -1961,9 +1972,9 @@ end
 
 function ringteract(m, o, intType) -- This is the ring interaction for ALL characters.
     local e = gCharacterStates[m.playerIndex]
-    
+
     if obj_has_behavior_id(o, id_bhvSonicRing) ~= 0 then
-        m.healCounter = 4
+        m.healCounter = m.healCounter + 4
         if m.playerIndex == 0 then
             gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + 1
             if m.action & (ACT_FLAG_SWIMMING | ACT_FLAG_METAL_WATER) ~= 0 then
@@ -1974,10 +1985,19 @@ function ringteract(m, o, intType) -- This is the ring interaction for ALL chara
         end
     end
 
+    -- Regular coins increase the rings counter and partially restore oxygen (1 coin = 5 seconds)
     if intType == INTERACT_COIN then
         if m.playerIndex == 0 then
             gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + o.oDamageOrCoinValue
-            e.sonic.oxygen = math.min(e.sonic.oxygen + o.oDamageOrCoinValue * 150, 900)
+        end
+        e.sonic.oxygen = math.min(e.sonic.oxygen + o.oDamageOrCoinValue * 150, 900)
+    end
+
+    -- Fully restores oxygen if Sonic grabs a bubble/water ring
+    if intType == INTERACT_WATER_RING then
+        e.sonic.oxygen = 900
+        if m.playerIndex == 0 then
+            play_sound(SOUND_MENU_POWER_METER, gGlobalSoundSource)
         end
     end
 end
