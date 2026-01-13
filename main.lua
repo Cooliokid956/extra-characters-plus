@@ -14,9 +14,13 @@ end
 -- Additional Voicelines used for Characters
 YOSHI_SOUND_FLUTTER = CHAR_SOUND_MAX + 1
 
--- Edit Model for Sonic
---local E_MODEL_SUPERSONIC = smlua_model_util_get_id("segasupersonic_geo"),
-
+GAMEMODE_ACTIVE = false
+for i in pairs(gActiveMods) do
+    local mod = gActiveMods[i]
+    if (mod.incompatible and mod.incompatible:find("gamemode")) or (mod.category and mod.category:find("gamemode")) then
+        GAMEMODE_ACTIVE = true
+    end
+end
 
 -- Characters are stored in a table for ease of addition
 
@@ -1714,22 +1718,7 @@ extraCharacters = {
         graffiti = get_texture_info("char-select-graffiti-sonic"),
         camScale = 0.9,
         offset = 0,
-        meter = {
-            label = {
-                left = get_texture_info("char-select-sonic-meter-left"),
-                right = get_texture_info("char-select-sonic-meter-right"),
-            },
-            pie = {
-                [1] = get_texture_info("char_select_custom_meter_pie1"),
-                [2] = get_texture_info("char_select_custom_meter_pie2"),
-                [3] = get_texture_info("char_select_custom_meter_pie3"),
-                [4] = get_texture_info("char_select_custom_meter_pie4"),
-                [5] = get_texture_info("char_select_custom_meter_pie5"),
-                [6] = get_texture_info("char_select_custom_meter_pie6"),
-                [7] = get_texture_info("char_select_custom_meter_pie7"),
-                [8] = get_texture_info("char_select_custom_meter_pie8"),
-            }
-        },
+        meter = nil, -- meter code in moveset
         caps = {
             normal =     smlua_model_util_get_id("segasonic_cap_geo"),
             wing =       smlua_model_util_get_id("segasonic_wing_cap_geo"),

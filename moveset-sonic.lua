@@ -5,9 +5,7 @@
 if not charSelect then return end
 
 -- Sonic variables for the local player only
-gPlayerSyncTable[0].rings = 0
 local sPrevRings = 0
-local sPowerTimer = 0
 local sRingTimeBetweenDamages = 0
 local sRingFlingFactor = 0
 local sPrevNonSonicHealth = nil
@@ -42,20 +40,6 @@ local CUSTOM_CHAR_ANIM_SONIC_RUN = 'sonic_running_2'
 local CUSTOM_CHAR_ANIM_SONIC_SPRING_RISE = 'sonic_spring'
 local CUSTOM_CHAR_ANIM_SONIC_SPRING_FALL = 'sonic_spring_fall'
 local CUSTOM_CHAR_ANIM_SONIC_BEFORE_GROUND_POUND = 'sonic_before_ground_pound'
-
--- Custom Rings meter HUD
-local RingMeterHUD = {
-    animation = 0,
-    y = 0,
-    prevY = 0,
-    visibleTimer = 0
-}
-
-local RING_METER_HIDDEN = 0
-local RING_METER_EMPHASIZING = 1
-local RING_METER_DEEMPHASIZING = 2
-local RING_METER_HIDING = 3
-local RING_METER_VISIBLE = 4
 
 local l = gLakituState
 
@@ -750,18 +734,26 @@ local function act_air_spin(m)
 
             if ray.surface and ray.surface.normal.y > gLevelValues.ceilNormalMaxY and ray.surface.normal.y < gLevelValues.floorNormalMinY then
 
+                local rawWallAngle = atan2s(ray.surface.normal.z, ray.surface.normal.x)
                 local wallAngle = wall_bounce(m, ray.surface.normal)
                 audio_sample_play(SOUND_SONIC_BOUNCE, m.pos, 1)
 
-                if m.actionTimer < 2 then
-                    m.vel.y = 30 * math.abs(e.sonic.realFVel) / 24
-                    m.vel.x = math.abs(e.sonic.realFVel / 2) * sins(wallAngle)
-                    m.vel.z = math.abs(e.sonic.realFVel / 2) * coss(wallAngle)
+                -- Count how many times you use the same wall angle, and punish accordingly
+                if e.sonic.prevWallAngle ~= rawWallAngle then
+                    e.sonic.wallSpam = 0
+                    e.sonic.prevWallAngle = rawWallAngle
                 else
-                    m.vel.y = 20 * math.abs(e.sonic.realFVel) / 32
-                    m.vel.x = math.abs(e.sonic.realFVel) * sins(wallAngle)
-                    m.vel.z = math.abs(e.sonic.realFVel) * coss(wallAngle)
+                    e.sonic.wallSpam = e.sonic.wallSpam + 1
                 end
+
+                local realVelFloored = math.max(math.abs(e.sonic.realFVel), 20) - e.sonic.wallSpam
+                if m.actionTimer < 2 then
+                    m.vel.y = 30 * realVelFloored / 24
+                else
+                    m.vel.y = 20 * realVelFloored / 32
+                end
+                m.vel.x = realVelFloored * sins(wallAngle)
+                m.vel.z = realVelFloored * coss(wallAngle)
 
                 m.actionArg = 0
                 e.sonic.actionADone = false
@@ -1130,7 +1122,7 @@ end
 
 function on_set_sonic_action(m)
     if m.playerIndex == 0 and m.action == ACT_BURNING_JUMP then
-        sPrevRings = gPlayerSyncTable[0].rings
+        sPrevRings = gPlayerSyncTable[m.playerIndex].rings
     end
 
     if m.faceAngle.x ~= 0 then
@@ -1154,10 +1146,6 @@ end
 function sonic_update(m)
     local e = gCharacterStates[m.playerIndex]
 
-    if m.playerIndex == 0 then
-        sPowerTimer = 0
-    end
-
     local groundMovingActions = {
         [ACT_SONIC_RUNNING] = 1,
         [ACT_SPIN_DASH] = 1,
@@ -1175,6 +1163,8 @@ function sonic_update(m)
         if m.vel.y >= 0 then
             e.sonic.prevHeight = m.pos.y
         end
+    else
+        e.sonic.prevWallAngle = -1
     end
 
     -- Water action sanity check in case before_set_sonic_action fails.
@@ -1263,7 +1253,7 @@ local function sonic_set_alive(m)
     if m.playerIndex == 0 and sPrevNonSonicHealth == nil then
         sPrevNonSonicHealth = m.health
     end
-    m.health = 0x880
+    m.health = 0x700
 end
 
 local function sonic_set_dead(m)
@@ -1276,21 +1266,19 @@ end
 function sonic_things_for_non_sonic_chars(m)
     -- Only run for the local player.
     if m.playerIndex ~= 0 then return end
+    -- Only run if you're not sonic
+    if gCSPlayers[m.playerIndex].movesetToggle or character_get_current_number(m.playerIndex) == CT_SONIC then return end
 
     -- Clear rings even when you're not Sonic.
     if m.hurtCounter > 0 then
-        gPlayerSyncTable[0].rings = 0
+        gPlayerSyncTable[m.playerIndex].rings = 0
     end
 
     -- Restore previous health if not Sonic
-    if sPrevNonSonicHealth ~= nil and character_get_current_number() ~= CT_SONIC then
+    if sPrevNonSonicHealth ~= nil then
         m.health = sPrevNonSonicHealth
         sPrevNonSonicHealth = nil
     end
-
-    -- Reenable the vanilla power meter when the moveset is off.
-    if sPowerTimer == 18 then hud_set_value(HUD_DISPLAY_FLAGS, hud_get_value(HUD_DISPLAY_FLAGS) | HUD_DISPLAY_FLAG_POWER) end
-    sPowerTimer = sPowerTimer + 1
 end
 
 function sonic_drowning(m, e)
@@ -1315,8 +1303,7 @@ function sonic_drowning(m, e)
 
         -- Empty rings and hide rings meter
         if m.playerIndex == 0 then
-            gPlayerSyncTable[0].rings = 0
-            RingMeterHUD.animation = RING_METER_HIDDEN
+            gPlayerSyncTable[m.playerIndex].rings = 0
         end
 
         if (m.input & INPUT_IN_POISON_GAS) ~= 0 then
@@ -1353,7 +1340,6 @@ function sonic_ring_health(m, e)
 
     --if (m.controller.buttonPressed & X_BUTTON) ~= 0 then gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + 20 end
 
-    -- Set health to max to hide the regular health meter
     if m.health > 0xFF then
         sonic_set_alive(m)
     else
@@ -1361,11 +1347,11 @@ function sonic_ring_health(m, e)
     end
 
     if m.hurtCounter > 0 then
-        if gPlayerSyncTable[0].rings > 32 then gPlayerSyncTable[0].rings = 32 end
+        if gPlayerSyncTable[m.playerIndex].rings > 32 then gPlayerSyncTable[m.playerIndex].rings = 32 end
         m.hurtCounter = 0
 
-        if gPlayerSyncTable[0].rings > 0 then
-            for i = 0,gPlayerSyncTable[0].rings -1,1 do
+        if gPlayerSyncTable[m.playerIndex].rings > 0 then
+            for i = 0, gPlayerSyncTable[m.playerIndex].rings - 1, 1 do
 
                 -- Near ground, send rings upwards only
                 local minY, maxY, flingFactorY
@@ -1393,7 +1379,7 @@ function sonic_ring_health(m, e)
 
         if sRingTimeBetweenDamages > 0 then sRingFlingFactor = sRingFlingFactor + 1 end
 
-        gPlayerSyncTable[0].rings = 0
+        gPlayerSyncTable[m.playerIndex].rings = 0
         sRingTimeBetweenDamages = 240 -- 8 seconds
     end
 
@@ -1409,7 +1395,7 @@ function sonic_ring_health(m, e)
         if sPrevRings > 0 then
             sonic_set_alive(m)
         end
-        if gPlayerSyncTable[0].rings > 0 then
+        if gPlayerSyncTable[m.playerIndex].rings > 0 then
             spawn_sync_object(
                 id_bhvSonicRing,
                 E_MODEL_YELLOW_COIN,
@@ -1420,7 +1406,7 @@ function sonic_ring_health(m, e)
                     o.oMoveAngleYaw = m.faceAngle.y + 0x8000 + degrees_to_sm64(math.random(-30, 30))
                     o.oTimer = 100
                 end)
-            gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings - 1
+            gPlayerSyncTable[m.playerIndex].rings = gPlayerSyncTable[m.playerIndex].rings - 1
         end
 
         if m.action == ACT_BURNING_JUMP then
@@ -1438,8 +1424,7 @@ end
 function sonic_value_refresh(m)
     local e = gCharacterStates[m.playerIndex]
     e.sonic.oxygen = 900
-    gPlayerSyncTable[0].rings = 0
-    RingMeterHUD.animation = RING_METER_HIDDEN
+    gPlayerSyncTable[m.playerIndex].rings = GAMEMODE_ACTIVE and 10 or 0
 end
 
 function sonic_on_level_init()
@@ -1708,6 +1693,12 @@ function sonic_before_phys_step(m, stepType, stepArg)
     e.sonic.physTimer = e.sonic.physTimer + 1
 end
 
+function sonic_allow_water(m, inWater)
+    if not inWater then
+        return false
+    end
+end
+
 ---------------
 -- Sonic HUD --
 ---------------
@@ -1727,7 +1718,7 @@ local homingCursorPrevTarget
 function sonic_hud_stuff()
     sonic_homing_hud()
     if obj_get_first_with_behavior_id(id_bhvActSelector) == nil then
-        sonic_ring_display(gPlayerSyncTable[0].rings)
+        --sonic_ring_display(gPlayerSyncTable[0].rings)
     end
 end
 
@@ -1782,103 +1773,57 @@ function sonic_homing_hud()
     end
 end
 
-local ringDisplayFlashTimer = 0
+sonicVanillaMeter = {
+    label = {
+        left = get_texture_info("char-select-sonic-meter-left"),
+        right = get_texture_info("char-select-sonic-meter-right"),
+    },
+    pie = {
+        [1] = get_texture_info("char_select_custom_meter_pie1"),
+        [2] = get_texture_info("char_select_custom_meter_pie2"),
+        [3] = get_texture_info("char_select_custom_meter_pie3"),
+        [4] = get_texture_info("char_select_custom_meter_pie4"),
+        [5] = get_texture_info("char_select_custom_meter_pie5"),
+        [6] = get_texture_info("char_select_custom_meter_pie6"),
+        [7] = get_texture_info("char_select_custom_meter_pie7"),
+        [8] = get_texture_info("char_select_custom_meter_pie8"),
+    }
+}
 
-function sonic_ring_display(rings)
-    local varRings = tostring(rings)
+function sonic_health_meter(localIndex, health, prevX, prevY, prevScaleW, prevScaleH, x, y, scaleW, scaleH)
+    local m = gMarioStates[localIndex]
+    local prevScaleW = prevScaleW/64
+    local prevScaleH = prevScaleH/64
+    local scaleW = scaleW/64
+    local scaleH = scaleH/64
+    if gCSPlayers[m.playerIndex].movesetToggle then
+        local djuiFont = djui_hud_get_font()
+        local djuiColor = djui_hud_get_color()
+        djui_hud_set_font(FONT_RECOLOR_HUD)
 
-    djui_hud_set_font(FONT_RECOLOR_HUD)
-    djui_hud_set_resolution(RESOLUTION_N64)
-    djui_hud_set_color(255, 255, 255, 255)
-
-    if rings <= 0 then
-        ringDisplayFlashTimer = (ringDisplayFlashTimer + 1) % 30
-    else
-        ringDisplayFlashTimer = 0
-    end
-    local x = (djui_hud_get_screen_width() / 2 - 20) - (djui_hud_measure_text(varRings) * 0.5) / 2 - 1
-    local x2 = djui_hud_get_screen_width() / 2 - 52
-
-    if RingMeterHUD.animation ==  RING_METER_EMPHASIZING then
-        sonic_ring_display_emphasizing(RingMeterHUD)
-    elseif RingMeterHUD.animation ==  RING_METER_DEEMPHASIZING then
-        sonic_ring_display_deemphasizing(RingMeterHUD)
-    elseif RingMeterHUD.animation ==  RING_METER_HIDING then
-        sonic_ring_display_hiding(RingMeterHUD)
-    elseif RingMeterHUD.animation ==  RING_METER_VISIBLE then
-        sonic_ring_display_visible(RingMeterHUD, gPlayerSyncTable[0].rings)
-    end
-
-    if RingMeterHUD.animation == RING_METER_HIDDEN and rings > 0 then
-        RingMeterHUD.visibleTimer = 0
-        RingMeterHUD.animation = RING_METER_EMPHASIZING
-    end
-
-    if RingMeterHUD.animation ~= RING_METER_HIDDEN then
-        djui_hud_render_texture_interpolated(TEX_SONIC_RING_METER, x2, RingMeterHUD.prevY - 25, 1, 1, x2, RingMeterHUD.y - 25, 1, 1)
-
-        if math.floor(ringDisplayFlashTimer / 15) == 1 then
-            djui_hud_set_color(255, 0, 0, 255)
+        djui_hud_render_texture_interpolated(TEX_SONIC_RING_METER, prevX, prevY, prevScaleW, prevScaleH, x, y, scaleW, scaleH)
+        
+        if gPlayerSyncTable[m.playerIndex].rings == 0 and math.floor(get_global_timer()%30 / 15) == 1 then
+            djui_hud_set_color(255 * djuiColor.r/255, 0, 0, djuiColor.a)
         else
-            djui_hud_set_color(255, 255, 0, 255)
+            djui_hud_set_color(255 * djuiColor.r/255, 255 * djuiColor.g/255, 0, djuiColor.a)
         end
-        djui_hud_print_text_interpolated(varRings, x, RingMeterHUD.prevY, 0.5, x, RingMeterHUD.y, 0.5)
+        local rings = tostring(gPlayerSyncTable[m.playerIndex].rings)
+        djui_hud_print_text_interpolated(rings, prevX + (31 - djui_hud_measure_text(rings)*0.25)*prevScaleW, prevY + 25*prevScaleH, prevScaleH*0.5, x + (31 - djui_hud_measure_text(rings)*0.25)*prevScaleW, y + 25*prevScaleH, scaleH*0.5)
+
+        -- Clean up after we're done
+        djui_hud_set_font(djuiFont)
+        djui_hud_set_color(djuiColor.r, djuiColor.g, djuiColor.b, djuiColor.a)
     else
-        RingMeterHUD.y = 68
-    end
-    RingMeterHUD.prevY = RingMeterHUD.y
-
-    hud_set_value(HUD_DISPLAY_FLAGS, hud_get_value(HUD_DISPLAY_FLAGS) & ~HUD_DISPLAY_FLAG_POWER)
-end
-
-function sonic_ring_display_emphasizing(h)
-    h.y = 68
-    if h.visibleTimer >= 45 then
-        h.animation = RING_METER_DEEMPHASIZING
-        h.visibleTimer = 0
-    end
-
-    h.visibleTimer = h.visibleTimer + 1
-end
-
-function sonic_ring_display_deemphasizing(h)
-    local speed = 3
-
-    if (h.y <= 44) then
-        speed = 2
-    end
-
-    if (h.y <= 38) then
-        speed = 1
-    end
-
-    if (h.y <= 33) then
-        h.y = 33
-        h.animation = RING_METER_VISIBLE
-    end
-    h.y = h.y - speed
-
-    h.visibleTimer = h.visibleTimer + 1
-end
-
-function sonic_ring_display_hiding(h)
-    h.y = h.y - 20
-
-    if h.y < -20 then h.animation = RING_METER_HIDDEN end
-end
-
-function sonic_ring_display_visible(h, rings)
-    h.y = 33
-
-    if h.visibleTimer >= 90 then
-        h.animation = RING_METER_HIDING
-        h.visibleTimer = 0
-    end
-
-    if rings > 0 then
-        h.visibleTimer = 0
-    else
-        h.visibleTimer = h.visibleTimer + 1
+        health = health >> 8
+        local tex = sonicVanillaMeter.label.left
+        djui_hud_render_texture_interpolated(tex, prevX, prevY, prevScaleW, prevScaleH, x, y, scaleW, scaleH)
+        tex = sonicVanillaMeter.label.right
+        djui_hud_render_texture_interpolated(tex, prevX + 31*prevScaleW, prevY, prevScaleW, prevScaleH, x + 31*scaleW, y, scaleW, scaleH)
+        if health > 0 then
+            tex = sonicVanillaMeter.pie[health]
+            djui_hud_render_texture_interpolated(tex, prevX + 15*prevScaleW, prevY + 16*scaleH, prevScaleW, prevScaleH, x + 15*scaleW, y + 16*scaleH, scaleW, scaleH)
+        end
     end
 end
 
@@ -1886,7 +1831,7 @@ end
 
 --- @param m MarioState
 function sonic_defacto_fix(m)
-    if get_options_status(6) ~= 0 and not are_movesets_restricted() and character_get_current_number() == CT_SONIC then
+    if gCSPlayers[m.playerIndex].movesetToggle and character_get_current_number() == CT_SONIC then
         local floorDYaw = m.floorAngle - m.faceAngle.y
 
         if (m.floor.normal.y < 0.9 and (math.abs(floorDYaw) <= 0x4500 and math.abs(floorDYaw) >= 0x3500)) then
@@ -1976,7 +1921,7 @@ function ringteract(m, o, intType) -- This is the ring interaction for ALL chara
     if obj_has_behavior_id(o, id_bhvSonicRing) ~= 0 then
         m.healCounter = m.healCounter + 4
         if m.playerIndex == 0 then
-            gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + 1
+            gPlayerSyncTable[m.playerIndex].rings = gPlayerSyncTable[m.playerIndex].rings + 1
             if m.action & (ACT_FLAG_SWIMMING | ACT_FLAG_METAL_WATER) ~= 0 then
                 play_sound(SOUND_GENERAL_COIN_WATER, m.marioObj.header.gfx.cameraToObject)
             else
@@ -1988,7 +1933,7 @@ function ringteract(m, o, intType) -- This is the ring interaction for ALL chara
     -- Regular coins increase the rings counter and partially restore oxygen (1 coin = 5 seconds)
     if intType == INTERACT_COIN then
         if m.playerIndex == 0 then
-            gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + o.oDamageOrCoinValue
+            gPlayerSyncTable[m.playerIndex].rings = gPlayerSyncTable[m.playerIndex].rings + o.oDamageOrCoinValue
         end
         e.sonic.oxygen = math.min(e.sonic.oxygen + o.oDamageOrCoinValue * 150, 900)
     end
