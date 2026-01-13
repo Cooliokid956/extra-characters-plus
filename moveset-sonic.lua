@@ -6,7 +6,6 @@ if not charSelect then return end
 
 -- Sonic variables for the local player only
 local sPrevRings = 0
-local sPowerTimer = 0
 local sRingTimeBetweenDamages = 0
 local sRingFlingFactor = 0
 local sPrevNonSonicHealth = nil
@@ -1161,10 +1160,6 @@ end
 function sonic_update(m)
     local e = gCharacterStates[m.playerIndex]
 
-    if m.playerIndex == 0 then
-        sPowerTimer = 0
-    end
-
     local groundMovingActions = {
         [ACT_SONIC_RUNNING] = 1,
         [ACT_SPIN_DASH] = 1,
@@ -1285,6 +1280,8 @@ end
 function sonic_things_for_non_sonic_chars(m)
     -- Only run for the local player.
     if m.playerIndex ~= 0 then return end
+    -- Only run if you're not sonic
+    if gCSPlayers[m.playerIndex].movesetToggle or character_get_current_number(m.playerIndex) == CT_SONIC then return end
 
     -- Clear rings even when you're not Sonic.
     if m.hurtCounter > 0 then
@@ -1292,14 +1289,10 @@ function sonic_things_for_non_sonic_chars(m)
     end
 
     -- Restore previous health if not Sonic
-    if sPrevNonSonicHealth ~= nil and character_get_current_number(m.playerIndex) ~= CT_SONIC then
+    if sPrevNonSonicHealth ~= nil then
         m.health = sPrevNonSonicHealth
         sPrevNonSonicHealth = nil
     end
-
-    -- Reenable the vanilla power meter when the moveset is off.
-    if sPowerTimer == 18 then hud_set_value(HUD_DISPLAY_FLAGS, hud_get_value(HUD_DISPLAY_FLAGS) | HUD_DISPLAY_FLAG_POWER) end
-    sPowerTimer = sPowerTimer + 1
 end
 
 function sonic_drowning(m, e)
@@ -1362,7 +1355,6 @@ function sonic_ring_health(m, e)
 
     --if (m.controller.buttonPressed & X_BUTTON) ~= 0 then gPlayerSyncTable[0].rings = gPlayerSyncTable[0].rings + 20 end
 
-    -- Set health to max to hide the regular health meter
     if m.health > 0xFF then
         sonic_set_alive(m)
     else
@@ -1373,8 +1365,10 @@ function sonic_ring_health(m, e)
         if gPlayerSyncTable[m.playerIndex].rings > 32 then gPlayerSyncTable[m.playerIndex].rings = 32 end
         m.hurtCounter = 0
 
+        djui_chat_message_create(tostring(gPlayerSyncTable[m.playerIndex].rings))
         if gPlayerSyncTable[m.playerIndex].rings > 0 then
-            for i = 0,gPlayerSyncTable[m.playerIndex].rings -1,1 do
+            for i = 0, gPlayerSyncTable[m.playerIndex].rings - 1, 1 do
+                djui_chat_message_create(tostring(i))
 
                 -- Near ground, send rings upwards only
                 local minY, maxY, flingFactorY
