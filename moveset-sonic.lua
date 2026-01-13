@@ -1954,3 +1954,71 @@ end
 
 hook_event(HOOK_ON_INTERACT, ringteract)
 id_bhvSonicRing = hook_behavior(nil, OBJ_LIST_LEVEL, true, bhv_ring_init, bhv_ring_loop, "bhvSonicRing")
+
+-- Various API functions for sonic
+_G.extraCharsSonic = {}
+
+---@param index_ integer?
+---@return boolean usingRingHealth
+extraCharsSonic.using_ring_health = function(index_)
+    if (CT_SONIC ~= _G.charSelect.character_get_current_number(index_ or 0)) then return false end
+    if (_G.charSelect.get_options_status(6) == 0) then return false end
+
+    return true
+end
+-- Note: update the above function if the ability to toggle off ring health is added
+
+---@param index_ integer?
+---@return integer rings
+extraCharsSonic.get_rings = function(index_)
+    local index = index_ or 0
+    return (gPlayerSyncTable[index].rings or 0)
+end
+
+---@param index_ integer?
+---@param value integer
+extraCharsSonic.set_rings = function(index_, value)
+    local index = index_ or 0
+    gPlayerSyncTable[index].rings = (value or 0)
+end
+
+---@param index_ integer?
+---@return integer oxygen
+extraCharsSonic.get_oxygen = function(index_)
+    local index = index_ or 0
+    return (gCharacterStates[index].sonic.oxygen or 900)
+end
+
+---@param index_ integer?
+---@param value integer
+extraCharsSonic.set_oxygen = function(index_, value)
+    local index = index_ or 0
+    gCharacterStates[index].sonic.oxygen = (value or 900)
+end
+
+---@param index_ integer?
+extraCharsSonic.reset_oxygen = function(index_)
+    local index = index_ or 0
+    gCharacterStates[index].sonic.oxygen = 900
+end
+
+-- Drops a ring behind Sonic, like when he is in a burning action
+---@param index_ integer?
+---@return Object o
+extraCharsSonic.drop_ring = function(index_)
+    local m = gMarioStates[index_ or 0]
+    local o = spawn_sync_object(
+        id_bhvSonicRing,
+        E_MODEL_YELLOW_COIN,
+        m.pos.x, m.pos.y, m.pos.z,
+        function (o)
+            o.oVelY = math.random(20, 40)
+            o.oForwardVel = math.random(15, 30)
+            o.oMoveAngleYaw = m.faceAngle.y + 0x8000 + degrees_to_sm64(math.random(-30, 30))
+            o.oTimer = 100
+        end)
+    return o
+end
+
+extraCharsSonic.sonic_set_alive = sonic_set_alive
+extraCharsSonic.sonic_set_dead = sonic_set_dead
