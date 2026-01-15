@@ -109,7 +109,7 @@ end
 ]]
 function update_spin_dashing(m, stopSpeed)
     local lossFactor
-    local accel
+    local accel = 4.0
     local oldSpeed
     local newSpeed
 
@@ -123,7 +123,7 @@ function update_spin_dashing(m, stopSpeed)
         forward = forward * (0.5 + 0.5 * m.forwardVel / 100.0)
     end
 
-    accel = 4.0
+    if (m.input & INPUT_ABOVE_SLIDE) ~= 0 then accel = 8.0 end
     lossFactor = math.min(m.intendedMag / 32.0 * forward / 100 + 0.98, 1)
 
     oldSpeed = math.sqrt(m.slideVelX * m.slideVelX + m.slideVelZ * m.slideVelZ)
@@ -647,6 +647,7 @@ end
 ---@param m MarioState
 local function act_spin_jump(m)
     local e = gCharacterStates[m.playerIndex]
+    
     if m.actionTimer == 0 then
         audio_sample_play(SOUND_SPIN_JUMP, m.pos, 1)
         play_character_sound_if_no_flag(m, CHAR_SOUND_YAH_WAH_HOO, MARIO_ACTION_SOUND_PLAYED)
@@ -679,7 +680,6 @@ local function act_spin_jump(m)
     if (m.controller.buttonPressed & B_BUTTON) ~= 0 then
         perform_sonic_b_action(m)
     end
-
 
     m.actionTimer = m.actionTimer + 1
 end
@@ -1027,6 +1027,7 @@ function act_sonic_fall(m)
         return perform_sonic_b_action(m)
     end
 
+
     if not m.heldObj then
         if m.actionArg == 0 then
             animation = CHAR_ANIM_GENERAL_FALL
@@ -1060,7 +1061,14 @@ function act_sonic_fall(m)
         landAction = ACT_HOLD_FREEFALL_LAND
     end
 
-    sonic_air_action_step(m, landAction, animation, AIR_STEP_CHECK_LEDGE_GRAB, true)
+    local stepResult = sonic_air_action_step(m, landAction, animation, AIR_STEP_CHECK_LEDGE_GRAB, true)
+    
+    if (m.controller.buttonDown & Z_TRIG) ~= 0 then
+        if stepResult == AIR_STEP_LANDED then
+            audio_sample_play(SOUND_ROLL, m.pos, 1)
+            set_mario_action(m, ACT_SPIN_DASH, 0)
+        end
+    end
 
     m.actionTimer = m.actionTimer + 1
 
@@ -1196,6 +1204,8 @@ function sonic_update(m)
         m.actionTimer = m.actionTimer + 1
     end
 
+    if (m.input & INPUT_ABOVE_SLIDE) ~= 0 then djui_chat_message_create("true") end
+
     if (m.action & ACT_FLAG_AIR) == 0 and m.action ~= ACT_BOUNCE_LAND then
         e.sonic.actionADone = false
         e.sonic.actionBDone = false
@@ -1216,6 +1226,19 @@ function sonic_update(m)
     -- Fall damage delay.
     if e.sonic.peakHeight - m.pos.y < 2000 then m.peakHeight = m.pos.y end
     if m.vel.y >= 0 or m.pos.y == m.floorHeight then e.sonic.peakHeight = m.pos.y end
+
+    sonic_instashield_interactions(m, e)
+
+    if m.health > 0xFF and m.action ~= ACT_BUBBLED and (m.action & ACT_GROUP_CUTSCENE) == 0 then
+        sonic_drowning(m, e)
+    end
+
+    sonic_ring_health(m, e)
+
+    e.sonic.instashieldTimer = e.sonic.instashieldTimer - 1
+end
+
+function sonic_instashield_interactions(m, e)
 
     -- Insta-shield attack. The best way I can do it for now.
     if e.sonic.instashieldTimer > 0 and instashieldActions[m.action] then
@@ -1240,18 +1263,12 @@ function sonic_update(m)
                         play_sound(SOUND_ACTION_HIT_2, m.marioObj.header.gfx.cameraToObject)
                     end
                 end
+
                 obj = obj_get_next(obj)
             end
         end
+        
     end
-
-    if m.health > 0xFF and m.action ~= ACT_BUBBLED and (m.action & ACT_GROUP_CUTSCENE) == 0 then
-        sonic_drowning(m, e)
-    end
-
-    sonic_ring_health(m, e)
-
-    e.sonic.instashieldTimer = e.sonic.instashieldTimer - 1
 end
 
 local showHealth = 0
