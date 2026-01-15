@@ -659,11 +659,12 @@ local function act_spin_jump(m)
 
     if e.sonic.instashieldTimer > 0 then spinSpeed = 1.5 end
 
+    m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
+
     set_character_animation(m, CHAR_ANIM_A_POSE)
     local stepResult = sonic_air_action_step(m, ACT_DOUBLE_JUMP_LAND, CHAR_ANIM_A_POSE, AIR_STEP_CHECK_HANG)
     m.marioObj.header.gfx.animInfo.animID = -1
 
-    m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
     m.marioObj.header.gfx.angle.x = m.faceAngle.x
 
     if (m.controller.buttonDown & Z_TRIG) ~= 0 then
@@ -692,11 +693,12 @@ local function act_air_spin(m)
 
     if e.sonic.instashieldTimer > 0 then spinSpeed = 1.5 end
 
+    m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
+
     set_character_animation(m, CHAR_ANIM_A_POSE)
     local stepResult = sonic_air_action_step(m, ACT_DOUBLE_JUMP_LAND, CHAR_ANIM_A_POSE, AIR_STEP_CHECK_HANG)
     m.marioObj.header.gfx.animInfo.animID = -1
 
-    m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
     m.marioObj.header.gfx.angle.x = m.faceAngle.x
 
     if (m.input & INPUT_A_PRESSED) ~= 0 and m.actionTimer > 0 then
@@ -811,6 +813,8 @@ local function act_homing_attack(m)
         m.faceAngle.y = yaw
     end
 
+    m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
+
     set_character_animation(m, CHAR_ANIM_A_POSE)
     m.particleFlags = m.particleFlags + PARTICLE_DUST
     m.marioObj.header.gfx.animInfo.animID = -1
@@ -851,7 +855,6 @@ local function act_homing_attack(m)
         end
     end
 
-    m.faceAngle.x = m.faceAngle.x + (0x2000 * spinSpeed)
     m.marioObj.header.gfx.angle.x = m.faceAngle.x
 
     m.actionTimer = m.actionTimer + 1
@@ -922,6 +925,8 @@ local function act_spin_dash(m)
         return set_mario_action(m, ACT_JUMP, 0)
     end
 
+    m.faceAngle.x = m.faceAngle.x + 0x2000 * m.forwardVel / 32
+
     set_mario_animation(m, CHAR_ANIM_A_POSE)
     m.marioObj.header.gfx.animInfo.animID = -1
     local stepResult = perform_ground_step(m)
@@ -945,7 +950,6 @@ local function act_spin_dash(m)
         return set_mario_action(m, ACT_CROUCHING, 0)
     end
 
-    m.faceAngle.x = m.faceAngle.x + 0x2000 * m.forwardVel / 32
     m.marioObj.header.gfx.angle.x = m.faceAngle.x
 
     m.marioObj.header.gfx.pos.y = m.pos.y + 60
@@ -1138,13 +1142,9 @@ function on_set_sonic_action(m)
         sPrevRings = p.rings
     end
 
-    if m.faceAngle.x ~= 0 then
-        m.faceAngle.x = 0
-    end
-
-    if m.marioObj.header.gfx.angle.x ~= 0 then
-        m.marioObj.header.gfx.angle.x = 0
-    end
+    m.faceAngle.x = 0
+    m.marioObj.header.gfx.angle.x = 0
+    m.marioObj.header.gfx.prevAngle.x = 0
 
     if m.action == ACT_FREEFALL then
         set_mario_action(m, ACT_SONIC_FALL, m.actionArg)
@@ -1227,7 +1227,10 @@ function sonic_update(m)
 
     sonic_instashield_interactions(m, e)
 
-    if m.health > 0xFF and m.action ~= ACT_BUBBLED and (m.action & ACT_GROUP_CUTSCENE) == 0 then
+    -- Restore oxygen if Sonic is dead to prevent a death loop after respawning
+    if m.health <= 0xFF then
+        e.sonic.oxygen = 900
+    elseif m.action ~= ACT_BUBBLED and (m.action & ACT_GROUP_CUTSCENE) == 0 then
         sonic_drowning(m, e)
     end
 
