@@ -196,14 +196,14 @@ extraCharacters = {
         palettes = {
             {
                 name     = "Default",
-                [PANTS]  = 'ff5096',
-                [SHIRT]  = 'f8c8bb',
+                [PANTS]  = 'ee6283',
+                [SHIRT]  = 'ffc5bd',
                 [GLOVES] = 'ffffff',
-                [SHOES]  = '0000ff',
-                [HAIR]   = 'ffd302',
-                [SKIN]   = 'fec179',
-                [CAP]    = 'ffff00',
-                [EMBLEM] = '0082ff'
+                [SHOES]  = '1635ce',
+                [HAIR]   = 'ffbf18',
+                [SKIN]   = 'ffe6a4',
+                [CAP]    = 'ffde00',
+                [EMBLEM] = '0883d5'
             },
             {
                 name     = "Classic",
