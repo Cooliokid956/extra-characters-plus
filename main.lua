@@ -377,6 +377,7 @@ extraCharacters = {
         model = smlua_model_util_get_id("daisy_geo"),
         forceChar = CT_MARIO,
         lifeIcon = get_texture_info("icon-daisy"),
+        graffiti = get_texture_info("char-select-graffiti-daisy"),
         camScale = 1,
         offset = 0,
         meter = {
@@ -1895,7 +1896,8 @@ local ultraBrosCredits = {
     {
         name = TEXT_PACK_NAME .. " Graffiti Artists",
         "WaflesAAA",
-        "SAWhane,Sonic",
+        "SAWhane",
+        "VioletArts",
     },
 }
 
