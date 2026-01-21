@@ -972,6 +972,7 @@ extraCharacters = {
         model = smlua_model_util_get_id("pauline_geo"),
         forceChar = CT_MARIO,
         lifeIcon = get_texture_info("icon-pauline"),
+        graffiti = get_texture_info("char-select-graffiti-pauline"),
         camScale = 1.1,
         offset = 0,
         meter = {
