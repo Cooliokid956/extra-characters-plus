@@ -13,10 +13,10 @@ _G.ACT_AXE_SPIN_DIZZY = allocate_mario_action(ACT_GROUP_MOVING | ACT_FLAG_MOVING
 local function bhv_axe_attack_init(o)
     o.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE | OBJ_FLAG_SET_FACE_ANGLE_TO_MOVE_ANGLE
 
-    o.oDamageOrCoinValue = 2
+    o.oDamageOrCoinValue = 4
     o.oNumLootCoins = 0
     o.oHealth = 0
-    o.hitboxRadius = 60
+    o.hitboxRadius = 100
     o.hitboxHeight = 80
     o.hurtboxRadius = 60
     o.hurtboxHeight = 80
