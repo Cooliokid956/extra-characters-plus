@@ -730,8 +730,9 @@ local function act_air_spin(m)
         if m.actionTimer < 10 then
 
             local dist = 80
+            local speedAngle = atan2s(m.vel.z, m.vel.x)
             local ray = collision_find_surface_on_ray(m.pos.x, m.pos.y + 30, m.pos.z,
-            sins(m.faceAngle.y) * dist, 0, coss(m.faceAngle.y) * dist)
+            sins(speedAngle) * dist, 0, coss(speedAngle) * dist)
 
             if ray.surface and ray.surface.normal.y > gLevelValues.ceilNormalMaxY and ray.surface.normal.y < gLevelValues.floorNormalMinY then
 
