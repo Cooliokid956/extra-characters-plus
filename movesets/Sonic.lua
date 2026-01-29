@@ -12,7 +12,6 @@ local sRingTimeBetweenDamages = 0
 local sRingFlingFactor = 0
 local sPrevNonSonicHealth = nil
 -- SlowDownBoots decreases values for a more balanced multiplayer experience. Temporary until Balanced Movesets is applied to CS.
-local sSlowDownBoots = false
 -- Sonic actions
 _G.ACT_SONIC_SPIN_JUMP        = allocate_mario_action(ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION | ACT_FLAG_CONTROL_JUMP_HEIGHT | ACT_FLAG_AIR | ACT_GROUP_AIRBORNE | ACT_FLAG_ATTACKING)
 _G.ACT_SONIC_FALL             = allocate_mario_action(ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION | ACT_FLAG_AIR | ACT_GROUP_AIRBORNE)

@@ -164,6 +164,12 @@ function mario_on_set_action(m)
         end
     end
 
+    --[[
+    if m.action == ACT_JUMP and m.prevAction == ACT_CRAWLING then
+        set_mario_action(m, ACT_HANDSTAND_JUMP, 0)
+    end
+    ]]
+
     if m.action == ACT_JUMP and m.prevAction == ACT_CRAWLING then
         set_mario_action(m, ACT_HANDSTAND_JUMP, 0)
     end
