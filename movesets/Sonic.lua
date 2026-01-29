@@ -2115,7 +2115,7 @@ extraCharsSonic.sonic_set_dead = sonic_set_dead
 local forceSlowBoots = false
 gGlobalSyncTable.slowDownBoots = sSlowDownBoots
 
-local OPTION_SLOW_BOOTS = charSelect.add_option("Slow Down Boots", nil, nil, nil, {"Makes Sonic's moveset less", "powerful (Host Only)"})
+local OPTION_SLOW_BOOTS = charSelect.add_option("Slow Down Boots", nil, nil, nil, {"Makes Sonic's moveset less", "powerful (Host Only)"}, false)
 charSelect.get_option(OPTION_SLOW_BOOTS).lock = function()
     if not network_is_server() then
         return "Host Only"
