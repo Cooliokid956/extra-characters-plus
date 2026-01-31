@@ -1545,7 +1545,7 @@ function sonic_allow_interact(m, o, intType)
     end
 
     if intType == INTERACT_POLE then
-        if m.action == ACT_HOMING_ATTACK then
+        if m.action == ACT_SONIC_HOMING_ATTACK then
             return false
         end
     end
