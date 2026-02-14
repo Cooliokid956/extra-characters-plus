@@ -957,6 +957,28 @@ extraCharacters = {
                 [CAP]    = 'c84c0c',
                 [EMBLEM] = '0000a8'
             },
+            {
+                name     = "1998",
+                [PANTS]  = '403228',
+                [SHIRT]  = '403228',
+                [GLOVES] = 'fec179',
+                [SHOES]  = '080808',
+                [HAIR]   = '1a161f',
+                [SKIN]   = 'fec179',
+                [CAP]    = '3c3841',
+                [EMBLEM] = '48c048'
+            },
+            {
+                name     = "Ballpicker",
+                [PANTS]  = 'a38dc4',
+                [SHIRT]  = '453c6f',
+                [GLOVES] = 'FFFFFF',
+                [SHOES]  = '342d59',
+                [HAIR]   = '2f1b42',
+                [SKIN]   = 'fec179',
+                [CAP]    = 'e5d117',
+                [EMBLEM] = 'b0ad6a'
+            },
         },
         voices = {
             [CHAR_SOUND_ATTACKED] = "foreman_spike_attacked.ogg",
@@ -1965,6 +1987,7 @@ local ultraBrosCredits = {
         "wwolforam,Sonic Render",
         "ThatGurlTilly,Birdo Model",
         "SMSAlfredo,Coder",
+        "Palettes,Ale64"
     },
     {
         name = TEXT_PACK_NAME .. " Voice Actors",
@@ -1984,7 +2007,10 @@ local ultraBrosCredits = {
         name = TEXT_PACK_NAME .. " Graffiti Artists",
         "WaflesAAA",
         "SAWhane",
+        "FunkyLion",
         "VioletArts",
+        "SullyBoy",
+        "Heylee"
     },
 }
 
