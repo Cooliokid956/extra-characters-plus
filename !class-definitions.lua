@@ -6,10 +6,20 @@
 --- @field public lastHurtCounter integer
 
 --- @class ToadState
-
---- @class WarioState
+--- @field public averageForwardVel number
 
 --- @class WaluigiState
+--- @field public lastHurtCounter integer
+--- @field public swims integer
+
+--- @class WarioState
+--- @field public angleDeltaQueue integer[]
+--- @field public lastHurtCounter integer
+--- @field public stickLastAngle integer
+--- @field public spinDirection integer
+--- @field public spinBufferTimer integer
+--- @field public spinInput integer
+--- @field public lastIntendedMag number
 
 --- @class ToadetteState
 --- @field public averageForwardVel number
@@ -62,8 +72,8 @@
 --- @field public mario MarioState
 --- @field public luigi LuigiState
 --- @field public toad ToadState
---- @field public wario WarioState
 --- @field public waluigi WaluigiState
+--- @field public wario WarioState
 --- @field public toadette ToadetteState
 --- @field public peach PeachState
 --- @field public daisy DaisyState
@@ -73,7 +83,7 @@
 --- @field public pauline PaulineState
 --- @field public rosalina RosalinaState
 --- @field public wapeach WapeachState
---- @field public donkeyKong DonkeyKongState
+--- @field public dk DonkeyKongState
 --- @field public sonic SonicState
 
 --- @alias SonicMouthGSCId

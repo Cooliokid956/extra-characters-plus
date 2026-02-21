@@ -1,4 +1,5 @@
 --- Vars that all movesets use --
+ANGLE_QUEUE_SIZE = 9
 
 --- @type CharacterState[]
 gCharacterStates = {}
@@ -9,9 +10,22 @@ for i = 0, (MAX_PLAYERS - 1) do
             scuttle = 0,
             lastHurtCounter = 0
         },
-        toad = {},
-        wario = {},
-        waluigi = {},
+        toad = {
+            averageForwardVel = 0
+        },
+        waluigi = {
+            lastHurtCounter = 0,
+            swims = 0
+        },
+        wario = {
+            angleDeltaQueue = {},
+            lastHurtCounter = 0,
+            stickLastAngle = 0,
+            spinDirection = 0,
+            spinBufferTimer = 0,
+            spinInput = 0,
+            lastIntendedMag = 0
+        },
         toadette = {
             averageForwardVel = 0
         },
@@ -32,7 +46,7 @@ for i = 0, (MAX_PLAYERS - 1) do
             orbitObjAngle = 0
         },
         wapeach = {},
-        donkeyKong = {},
+        dk = {},
         sonic = {
             spinCharge = 0,
             groundYVel = 0,
@@ -53,6 +67,7 @@ for i = 0, (MAX_PLAYERS - 1) do
             prevWallAngle = -1
         }
     }
+    for j = 1, ANGLE_QUEUE_SIZE do gCharacterStates[i].wario.angleDeltaQueue[j] = 0 end
 
     gPlayerSyncTable[i].rings = 0
 end
