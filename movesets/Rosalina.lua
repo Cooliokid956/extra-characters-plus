@@ -190,24 +190,39 @@ function rosalina_update(m)
         end
     end
 
-    m.health = math.min(m.health, 0x780)
-
-    if m.hurtCounter > e.lastHurtCounter then
-        m.hurtCounter = e.hp > 2 and 10 or 15
+    -- if m.hurtCounter > e.lastHurtCounter then
+    --     m.hurtCounter = e.hp > 2 and 10 or 15
+    --     e.meterState = METER_STATE_HIT
+    --     e.meterTimer = 0
+    --     e.hp = math.max(0, e.hp - 1)
+    -- end
+    -- e.lastHurtCounter = m.hurtCounter
+    if m.playerIndex == 0 then
+        djui_chat_message_create("hurt"..m.hurtCounter)
+        djui_chat_message_create("heal:"..m.healCounter)
+    end
+    if m.hurtCounter > 0 then
+        m.hurtCounter = 0
         e.meterState = METER_STATE_HIT
         e.meterTimer = 0
-        e.hp = math.max(0, e.hp - 1)
+        e.hp = math.max(e.hp - 1, 0)
     end
-    e.lastHurtCounter = m.hurtCounter
 
-    if m.healCounter > e.lastHealCounter then
-        if m.healCounter < 15 then
-            m.healCounter = e.hp > 2 and 10 or 15
-        end
-        e.hp = math.min(e.hp + m.healCounter // 10, 3)
+    -- if m.healCounter > e.lastHealCounter then
+    --     if m.healCounter < 15 then
+    --         m.healCounter = e.hp > 2 and 10 or 15
+    --     end
+    --     e.hp = math.min(e.hp + m.healCounter // 10, 3)
+    -- end
+    -- e.lastHealCounter = m.healCounter
+    if m.healCounter % 4 == 2 then
+        e.hp = math.min(e.hp + m.healCounter // 4, e.hp > 3 and 6 or 3)
     end
-    e.lastHealCounter = m.healCounter
 
+    -- if m.health > 0xff and e.hp == 0 then
+    --     e.hp = 1
+    -- end
+    m.health = 0xff + 0x100 * e.hp
     m.peakHeight = m.pos.y
 end
 
@@ -337,16 +352,33 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
     end
 end
 
+-- Life Mushroom
+local mushroomBhvs = {
+    id_bhv1Up,
+    id_bhv1upJumpOnApproach,
+    id_bhv1upRunningAway,
+    id_bhv1upSliding,
+    id_bhv1upWalking,
+    id_bhvHidden1up,
+    id_bhvHidden1upInPole
+}
+
+function obj_has_behavior_ids(o, ids)
+    for _, id in ipairs(ids) do
+        if obj_has_behavior_id(o, id) ~= 0 then return true end
+    end
+end
+
 local lifeMushroomObjs = {}
 local E_MODEL_LIFE_MUSHROOM = smlua_model_util_get_id("life_mushroom_geo")
--- Life Mushroom
+
 function create_life_mushroom(o)
-    if obj_is_mushroom_1up(o) then
-        djui_chat_message_create("a mushroom ?")
-        -- if math.random(5) == 5 then
+    if obj_has_behavior_ids(o, mushroomBhvs) then
+        if math.random(5) == 5 then
             lifeMushroomObjs[o] = 1
-            djui_chat_message_create("mushroom was turned!")
-        -- end
+            djui_chat_message_create("life mushroom!")
+            else djui_chat_message_create("regular 1up ..")
+        end
     end
 end
 
@@ -363,10 +395,11 @@ function collect_life_mushroom(o)
         if m then
             local i = m.playerIndex
             if obj_check_if_collided_with_object(o, m.marioObj) ~= 0
-            and charSelect.character_get_current_number(i) == CT_ROSALINA then
+            and character_get_current_number(i) == CT_ROSALINA then
                 local e = gCharacterStates[i].rosalina
                 e.meterTimer = 0
                 e.meterState = METER_STATE_JOIN
+                m.numLives = m.numLives - 1
                 if i == 0 then enable_time_stop_including_mario() end
             end
         end
