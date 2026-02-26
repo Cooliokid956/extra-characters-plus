@@ -312,7 +312,9 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
             -- 5 frames- first slice    (5)
             -- 4 frames- second         (9)
             -- 5 frames- third          (14)
-            e.hp = 3 + math.min(timer // 2, 3)
+            if timer % 2 == 0 then
+                e.hp = math.min(e.hp + 1, 6)
+            end
             -- begin moving after 43    (57)
 
             -- 25 frames to reach meter (69)
