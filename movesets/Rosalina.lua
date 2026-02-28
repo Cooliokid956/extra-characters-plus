@@ -205,7 +205,7 @@ function rosalina_update(m)
         m.hurtCounter = 0
         e.meterState = METER_STATE_HIT
         e.meterTimer = 0
-        e.hp = math.max(e.hp - 1, 0)
+        e.hp = math.max(e.hp - (m.squishTimer > 0 and 3 or 1), 0)
     end
 
     -- if m.healCounter > e.lastHealCounter then
@@ -268,7 +268,7 @@ for i = 0, 6 do
     specialMeter[i] = get_texture_info("char-select-ec-rosa-meter-"..i)
     specialMeterNum[i] = get_texture_info("char-select-ec-rosa-meter-num-"..i)
 end
-
+local sins, coss = sins, coss
 function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x, y, w, h)
     local m = gMarioStates[localIndex]
     local e = gCharacterStates[m.playerIndex].rosalina
@@ -282,20 +282,23 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
         local x2, prevX2, y2, prevY2
             = x , prevX , y , prevY
 
+        -- local x3, prevX3, y3, prevY3
+        --     = x , prevX , y , prevY
+
         if e.meterState == METER_STATE_IDLE then
             if e.hp < 3 then
-                local fac = math.pi*((3-e.hp)/6)
-                local pulse = 1 + (math.sin(timer*fac))*.1
-                local pulsePrev = 1 + (math.sin((timer-1)*fac))*.1
+                local fac = 0x8000*((3-e.hp)/6)
+                local pulse = 1.05 - .05*coss(timer*fac)
+                local pulsePrev = 1.05 - .05*coss((timer-1)*fac)
                 w, prevW = w * pulse, prevW * pulsePrev
                 h, prevH = h * pulse, prevH * pulsePrev
             end
 
         elseif e.meterState == METER_STATE_HIT then
-            local fac = math.pi/12
-            local mag = math.sin(fac*math.min(12, timer))*3
-            local magPrev = math.sin(fac*math.min(12, timer-1))*3
-            local magPrev2 = math.sin(fac*math.min(12, timer-2))*3
+            local fac = 0x8000/12
+            local mag = sins(fac*math.min(12, timer))*3
+            local magPrev = sins(fac*math.min(12, timer-1))*3
+            local magPrev2 = sins(fac*math.min(12, timer-2))*3
             x, prevX = x + sins(timer*0x4000) * mag, prevX + sins((timer-1)*0x4000) * magPrev
             y, prevY = y + coss(timer*0x4000) * mag, prevY + coss((timer-1)*0x4000) * magPrev
             x2, prevX2 = prevX, prevX + sins((timer-2)*0x4000) * magPrev2
@@ -303,7 +306,7 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
 
             if timer > 13 then
                 e.meterState = e.hp > 0 and METER_STATE_IDLE or METER_STATE_BREAK
-                e.meterTimer = -1
+                e.meterTimer = 1
             end
 
         elseif e.meterState == METER_STATE_JOIN then
@@ -334,15 +337,17 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
 
         djui_hud_set_color(255, 255, 255, 255)
 
-        -- local meter = specialMeter[math.min(e.hp, 3)]
-        local meter = specialMeter[e.hp]
         local extraMeter = e.hp > 3 and specialMeter[e.hp] or specialMeter[0]
-        local num = specialMeterNum[e.hp]
-
+        
+        local meter = specialMeter[e.hp]
+        -- local meter = specialMeter[math.min(e.hp, 3)]
         local xOffset, xOffsetP = 32 * (1-w), 32 * (1-prevW)
         local yOffset, yOffsetP = 32 * (1-h), 32 * (1-prevH)
         djui_hud_render_texture_interpolated(meter, prevX + xOffsetP, prevY + yOffsetP, prevW, prevH, x + xOffset, y + yOffset, w, h)
+
         djui_hud_render_texture_interpolated(TEX_LIFE_LABEL, prevX2 + xOffsetP, prevY2 + yOffsetP, prevW, prevH, x2 + xOffset, y2 + yOffset, w, h)
+
+        local num = specialMeterNum[e.hp]
         xOffset, xOffsetP = xOffset + w*19, xOffsetP + prevW*19
         yOffset, yOffsetP = yOffset + h*22, yOffsetP + prevH*22
         djui_hud_render_texture_interpolated(num, prevX2 + xOffsetP, prevY2 + yOffsetP, prevW, prevH, x2 + xOffset, y2 + yOffset, w, h)
@@ -380,13 +385,10 @@ local lifeMushroomObjs = {}
 local E_MODEL_LIFE_MUSHROOM = smlua_model_util_get_id("life_mushroom_geo")
 
 function create_life_mushroom(o)
-    if obj_has_behavior_ids(o, mushroomBhvs) then
-        -- if math.random(5) == 5 then
-            lifeMushroomObjs[o] = 1
-            djui_chat_message_create("life mushroom!")
-        --     else djui_chat_message_create("regular 1up ..")
-        -- end
-    end
+    if math.random(5) == 5 and obj_has_behavior_ids(o, mushroomBhvs) then
+        lifeMushroomObjs[o] = 1
+        djui_chat_message_create("life mushroom!")
+    else lifeMushroomObjs[o] = nil end
 end
 
 function replace_life_mushroom_model(o, _, model)
@@ -405,7 +407,6 @@ function collect_life_mushroom(o)
             and character_get_current_number(i) == CT_ROSALINA then
                 local e = gCharacterStates[i].rosalina
                 if e.hp < 6 then
-                    if e.hp > 3 then e.hp = 3 end
                     e.meterTimer = 0
                     e.meterState = METER_STATE_JOIN
                     m.numLives = m.numLives - 1
@@ -419,7 +420,6 @@ end
 
 return {
     { HOOK_MARIO_UPDATE, rosalina_update },
- -- { HOOK_ON_PVP_ATTACK, rosalina_on_pvp_attack },
     { HOOK_ALLOW_INTERACT, rosalina_allow_interact },
     { HOOK_BEFORE_SET_MARIO_ACTION, rosalina_before_action },
     { HOOK_ON_OBJECT_LOAD, create_life_mushroom, global = true },
