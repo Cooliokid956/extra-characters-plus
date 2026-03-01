@@ -14,6 +14,9 @@ local METER_STATE_HIT   = 1
 local METER_STATE_JOIN  = 2
 local METER_STATE_BREAK = 3
 
+local METER_STATE_HIT_X   = 4
+local METER_STATE_BREAK_X = 5
+
 ---@param o Object
 function bhv_spin_attack_init(o)
     o.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE -- Allows you to change the position and angle
@@ -190,39 +193,26 @@ function rosalina_update(m)
         end
     end
 
-    -- if m.hurtCounter > e.lastHurtCounter then
-    --     m.hurtCounter = e.hp > 2 and 10 or 15
-    --     e.meterState = METER_STATE_HIT
-    --     e.meterTimer = 0
-    --     e.hp = math.max(0, e.hp - 1)
+    -- if m.playerIndex == 0 then
+    --     djui_chat_message_create(("%i, %X (%i)"):format(m.health >> 8, m.health, m.healCounter - m.hurtCounter))
     -- end
-    -- e.lastHurtCounter = m.hurtCounter
-    if m.playerIndex == 0 then
-        djui_chat_message_create("hurt"..m.hurtCounter)
-        djui_chat_message_create("heal:"..m.healCounter)
-    end
     if m.hurtCounter > 0 then
         m.hurtCounter = 0
-        e.meterState = METER_STATE_HIT
-        e.meterTimer = 0
+        e.meterState = e.hp > 3 and METER_STATE_HIT_X or METER_STATE_HIT
+        e.meterTimer = 1
         e.hp = math.max(e.hp - (m.squishTimer > 0 and 3 or 1), 0)
     end
 
-    -- if m.healCounter > e.lastHealCounter then
-    --     if m.healCounter < 15 then
-    --         m.healCounter = e.hp > 2 and 10 or 15
-    --     end
-    --     e.hp = math.min(e.hp + m.healCounter // 10, 3)
-    -- end
-    -- e.lastHealCounter = m.healCounter
-    if m.healCounter % 4 == 2 then
-        e.hp = math.min(e.hp + m.healCounter // 4, e.hp > 3 and 6 or 3)
+    if m.healCounter > 0 then
+        e.hp = math.min(e.hp + (m.healCounter + 1) // 4, e.hp > 3 and 6 or 3)
+        m.healCounter = 0
     end
 
-    -- if m.health > 0xff and e.hp == 0 then
-    --     e.hp = 1
-    -- end
-    m.health = 0xff + 0x100 * e.hp
+    if m.playerIndex == 0 then
+        m.health = 0xff + 0x100 * e.hp
+    else
+        e.hp = (m.health - 0xff) // 0x100
+    end
     m.peakHeight = m.pos.y
 end
 
@@ -261,6 +251,17 @@ local vanillaMeter = {
     }
 }
 
+local djui_hud_set_color, djui_hud_render_texture_interpolated = djui_hud_set_color, djui_hud_render_texture_interpolated
+local function render_texture_shadow_interp(tex, xP, yP, wP, hP, x, y, w, h, xSP, ySP, xS, yS)
+    local c = djui_hud_get_color()
+    djui_hud_set_color(0, 0, 0, c.a // 2)
+    djui_hud_render_texture_interpolated(tex,
+        xP + xSP, yP + ySP, wP, hP,
+        x  + xS,  y  + yS,  w,  h)
+    djui_hud_set_color(c.r, c.g, c.b, c.a)
+    djui_hud_render_texture_interpolated(tex, xP, yP, wP, hP, x, y, w, h)
+end
+
 local TEX_LIFE_LABEL = get_texture_info("char-select-ec-rosa-meter-life")
 local specialMeter = {}
 local specialMeterNum = {}
@@ -269,40 +270,52 @@ for i = 0, 6 do
     specialMeterNum[i] = get_texture_info("char-select-ec-rosa-meter-num-"..i)
 end
 local sins, coss = sins, coss
-function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x, y, w, h)
+function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
     local m = gMarioStates[localIndex]
     local e = gCharacterStates[m.playerIndex].rosalina
+    w, wP = w/64, wP/64
+    h, hP = h/64, hP/64
 
     if gCSPlayers[m.playerIndex].movesetToggle then
-        local djuiColor = djui_hud_get_color()
-
         local timer = e.meterTimer
-        w, prevW = w/64, prevW/64
-        h, prevH = h/64, prevH/64
-        local x2, prevX2, y2, prevY2
-            = x , prevX , y , prevY
+        local s, sP = 1, 1
+        local x2, x2P, y2, y2P
+            = x , xP , y , yP
 
-        -- local x3, prevX3, y3, prevY3
-        --     = x , prevX , y , prevY
+        local extraOffset = 16 * w
+        local x3, x3P, y3, y3P
 
         if e.meterState == METER_STATE_IDLE then
             if e.hp < 3 then
                 local fac = 0x8000*((3-e.hp)/6)
-                local pulse = 1.05 - .05*coss(timer*fac)
-                local pulsePrev = 1.05 - .05*coss((timer-1)*fac)
-                w, prevW = w * pulse, prevW * pulsePrev
-                h, prevH = h * pulse, prevH * pulsePrev
+                s, sP = 1.05 - .05*coss(timer*fac), 1.05 - .05*coss((timer-1)*fac)
+                x, xP = x + 32 * w * (1-s), xP + 32 * wP * (1-sP)
+                y, yP = y + 32 * h * (1-s), yP + 32 * hP * (1-sP)
+                x2, x2P, y2, y2P = x, xP, y, yP
+            elseif e.hp > 3 then
+                x3, x3P = x - extraOffset, xP - extraOffset
+                y3, y3P = y, yP
+                x2, x2P, y2, y2P = x3, x3P, y3, y3P
             end
 
-        elseif e.meterState == METER_STATE_HIT then
+        elseif e.meterState == METER_STATE_HIT
+            or e.meterState == METER_STATE_HIT_X then
+            local extra = e.meterState == METER_STATE_HIT_X
             local fac = 0x8000/12
             local mag = sins(fac*math.min(12, timer))*3
-            local magPrev = sins(fac*math.min(12, timer-1))*3
+            local magP = sins(fac*math.min(12, timer-1))*3
             local magPrev2 = sins(fac*math.min(12, timer-2))*3
-            x, prevX = x + sins(timer*0x4000) * mag, prevX + sins((timer-1)*0x4000) * magPrev
-            y, prevY = y + coss(timer*0x4000) * mag, prevY + coss((timer-1)*0x4000) * magPrev
-            x2, prevX2 = prevX, prevX + sins((timer-2)*0x4000) * magPrev2
-            y2, prevY2 = prevY, prevY + coss((timer-2)*0x4000) * magPrev2
+
+            if extra then x3, x3P, y3, y3P = x, xP, y, yP end
+            x, xP = x + sins(timer*0x4000) * mag, xP + sins((timer-1)*0x4000) * magP
+            y, yP = y + coss(timer*0x4000) * mag, yP + coss((timer-1)*0x4000) * magP
+            if extra then x, xP = x - extraOffset, xP - extraOffset end
+            x2, x2P = xP, xP + sins((timer-2)*0x4000) * magPrev2
+            y2, y2P = yP, yP + coss((timer-2)*0x4000) * magPrev2
+            if extra then
+                x, xP, x3, x3P = x3, x3P, x, xP
+                y, yP, y3, y3P = y3, y3P, y, yP
+            end
 
             if timer > 13 then
                 e.meterState = e.hp > 0 and METER_STATE_IDLE or METER_STATE_BREAK
@@ -311,18 +324,27 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
 
         elseif e.meterState == METER_STATE_JOIN then
             -- (60hz)
-            -- empty meter appear       (0)
+            -- empty meter appears (0)
+            x3, x3P = x - extraOffset, xP - extraOffset
+            y3, y3P = y, yP
 
-            -- 5 frames- first slice    (5)
-            -- 4 frames- second         (9)
-            -- 5 frames- third          (14)
+            -- increment life every 5 frames
             if timer % 2 == 1 then
                 e.hp = math.min(e.hp + 1, 6)
             end
 
-            -- begin moving after 43    (57)
-            if timer > 29 then
-                -- ex
+            -- begin moving (57) (29/30 to 35)
+            if timer < 35 then
+                local pos = gVec3fZero()
+                vec3f_copy(pos, m.pos)
+                pos.y = pos.y + 200
+
+                if djui_hud_world_pos_to_screen_pos(pos, pos) ~= 0 then
+                    local t = IN_SINE((math.max(23, timer) - 23)/12)
+                    local tP = IN_SINE((math.max(23, timer-1) - 23)/12)
+                    x3, x3P = math.lerp(pos.x, x3, t), math.lerp(pos.x, x3P, tP)
+                    y3, y3P = math.lerp(pos.y, y3, t), math.lerp(pos.y, y3P, tP)
+                end
             end
 
             -- 25 frames to reach meter (69)
@@ -335,31 +357,45 @@ function rosalina_health_meter(localIndex, health, prevX, prevY, prevW, prevH, x
 
         e.meterTimer = timer + 1
 
+        local meter = specialMeter[math.min(e.hp, 3)]
+        local extraMeter = e.hp > 3 and specialMeter[e.hp] or specialMeter[0]
+        local num = specialMeterNum[e.hp]
+
+        local ws,  wsP,   hs,  hsP
+            = w*s, wP*sP, h*s, hP*sP
+
         djui_hud_set_color(255, 255, 255, 255)
 
-        local extraMeter = e.hp > 3 and specialMeter[e.hp] or specialMeter[0]
-        
-        local meter = specialMeter[e.hp]
-        -- local meter = specialMeter[math.min(e.hp, 3)]
-        local xOffset, xOffsetP = 32 * (1-w), 32 * (1-prevW)
-        local yOffset, yOffsetP = 32 * (1-h), 32 * (1-prevH)
-        djui_hud_render_texture_interpolated(meter, prevX + xOffsetP, prevY + yOffsetP, prevW, prevH, x + xOffset, y + yOffset, w, h)
+        -- Main Meter
+        render_texture_shadow_interp(meter,
+            xP, yP, wsP, hsP,
+            x,  y,  ws,  hs,
+            3*wsP, 2*hsP, 3*ws, 2*hs)
 
-        djui_hud_render_texture_interpolated(TEX_LIFE_LABEL, prevX2 + xOffsetP, prevY2 + yOffsetP, prevW, prevH, x2 + xOffset, y2 + yOffset, w, h)
+        -- Extra Meter
+        if x3 then
+            render_texture_shadow_interp(extraMeter,
+                x3P, y3P, wsP, hsP,
+                x3,  y3,  ws,  hs,
+                3*wsP, 2*hsP, 3*ws, 2*hs)
+        end
 
-        local num = specialMeterNum[e.hp]
-        xOffset, xOffsetP = xOffset + w*19, xOffsetP + prevW*19
-        yOffset, yOffsetP = yOffset + h*22, yOffsetP + prevH*22
-        djui_hud_render_texture_interpolated(num, prevX2 + xOffsetP, prevY2 + yOffsetP, prevW, prevH, x2 + xOffset, y2 + yOffset, w, h)
+        -- LIFE Label
+        djui_hud_render_texture_interpolated(TEX_LIFE_LABEL,
+            x2P, y2P, wsP, hsP,
+            x2,  y2,  ws,  hs)
 
-        -- Clean up after we're done
-        djui_hud_set_color(djuiColor.r, djuiColor.g, djuiColor.b, djuiColor.a)
+        -- Number
+        render_texture_shadow_interp(num,
+            x2P + 19*wsP, y2P + 22*hsP, wsP, hsP,
+            x2  + 19*ws,  y2  + 22*hs,  ws,  hs,
+            2*wsP, 2*hsP, 2*ws, 2*hs)
 
     else
-        djui_hud_render_texture_interpolated(vanillaMeter.label.left, prevX, prevY, prevW, prevH, x, y, w, h)
-        djui_hud_render_texture_interpolated(vanillaMeter.label.right, prevX + 31*prevW, prevY, prevW, prevH, x + 31*w, y, w, h)
+        djui_hud_render_texture_interpolated(vanillaMeter.label.left, xP, yP, wP, hP, x, y, w, h)
+        djui_hud_render_texture_interpolated(vanillaMeter.label.right, xP + 31*wP, yP, wP, hP, x + 31*w, y, w, h)
         if health > 0 then
-            djui_hud_render_texture_interpolated(vanillaMeter.pie[health >> 8], prevX + 15*prevW, prevY + 16*h, prevW, prevH, x + 15*w, y + 16*h, w, h)
+            djui_hud_render_texture_interpolated(vanillaMeter.pie[health >> 8], xP + 15*wP, yP + 16*h, wP, hP, x + 15*w, y + 16*h, w, h)
         end
     end
 end
@@ -407,7 +443,7 @@ function collect_life_mushroom(o)
             and character_get_current_number(i) == CT_ROSALINA then
                 local e = gCharacterStates[i].rosalina
                 if e.hp < 6 then
-                    e.meterTimer = 0
+                    e.meterTimer = 1
                     e.meterState = METER_STATE_JOIN
                     m.numLives = m.numLives - 1
                     if i == 0 then enable_time_stop_including_mario() end
