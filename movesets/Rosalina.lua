@@ -1,5 +1,11 @@
 require "anims/rosalina"
 
+-- misc locals
+local asin, pi = math.asin, math.pi
+local IN_SINE, OUT_SINE, INV_OUT_SINE = IN_SINE, OUT_SINE, function (x) return 2 * asin(x) / pi end
+local djui_hud_set_color, djui_hud_render_texture_interpolated = djui_hud_set_color, djui_hud_render_texture_interpolated
+local sins, coss = sins, coss
+
 _G.ACT_ROSA_JUMP_TWIRL = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_AIR | ACT_FLAG_ATTACKING)
 local E_MODEL_TWIRL_EFFECT = smlua_model_util_get_id("spin_attack_geo")
 
@@ -9,7 +15,6 @@ local METER_STATE_JOIN  = 2
 local METER_STATE_BREAK = 3
 
 local METER_STATE_HIT_X   = 4
-local METER_STATE_BREAK_X = 5
 
 ---@param o Object
 function bhv_spin_attack_init(o)
@@ -203,9 +208,9 @@ function rosalina_update(m)
     end
 
     if m.playerIndex == 0 then
-        m.health = 0xff + 0x100 * e.hp
+        m.health = (e.hp == 3 and e.meterTimer > 60) and 0x880 or 0x7FF * OUT_SINE(e.hp / 6)
     else
-        e.hp = (m.health - 0xff) // 0x100
+        e.hp = m.health == 0x880 and 3 or INV_OUT_SINE(m.health / 0x7FF) * 6
     end
     m.peakHeight = m.pos.y
 end
@@ -245,7 +250,6 @@ local vanillaMeter = {
     }
 }
 
-local djui_hud_set_color, djui_hud_render_texture_interpolated = djui_hud_set_color, djui_hud_render_texture_interpolated
 local function render_texture_shadow_interp(tex, xP, yP, wP, hP, x, y, w, h, xSP, ySP, xS, yS)
     local c = djui_hud_get_color()
     djui_hud_set_color(0, 0, 0, c.a // 2)
@@ -263,7 +267,6 @@ for i = 0, 6 do
     specialMeter[i] = get_texture_info("char-select-ec-rosa-meter-"..i)
     specialMeterNum[i] = get_texture_info("char-select-ec-rosa-meter-num-"..i)
 end
-local sins, coss = sins, coss
 function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
     local m = gMarioStates[localIndex]
     local e = gCharacterStates[m.playerIndex].rosalina
@@ -440,6 +443,7 @@ function collect_life_mushroom(o)
                     e.meterTimer = 1
                     e.meterState = METER_STATE_JOIN
                     m.numLives = m.numLives - 1
+                    m.health = 0x7FF
                     if i == 0 then enable_time_stop_including_mario() end
                 end
             end
