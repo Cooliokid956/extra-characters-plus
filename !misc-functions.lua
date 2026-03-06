@@ -46,3 +46,11 @@ function in_between(x, min, max, inclusive)
 
     return false
 end
+
+--- @param name string
+--- @param i any
+--- @param j any
+--- @overload fun()
+function load_textures(name, i, j)
+
+end

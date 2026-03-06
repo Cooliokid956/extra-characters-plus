@@ -238,16 +238,41 @@ function rosalina_before_action(m, action)
 end
 
 -- HUD stuff
+---@class Particle
+---@field x number
+---@field y number
+---@field z number
+---@field vx number
+---@field vy number
+---@field vz number
+---@field t integer
+---@field tex TextureInfo
+---@field update function
+
+---@return Particle
 local Particle = function ()
     return {
-        x  = 0, y  = 0, z  = 0,
+        x  = 0, y  = 0, z  = 1,
         vx = 0, vy = 0, vz = 0,
+        t = 0
     }
 end
 -- cur_obj_scale(o.header.gfx.scale.x - (1 - o.header.gfx.scale.x)*.6)
 -- line of interest
-local P_SHATTER_SMALL = function (x, y, s)
+local glassTex = {}
+function glass_update()
     
+end
+local ParticleGlass = function (x, y, s)
+    local p = Particle()
+    p.x, p.y = x, y
+    p.z = (0.8 + math.random() * 0.4) * s
+    -- p.tex = 
+end
+local P_SHATTER_SMALL = function (x, y, s)
+    for i = 1, 10, 1 do
+        
+    end
 end
 local P_SHATTER_LARGE = function (x, y, s)
     
@@ -265,7 +290,24 @@ local function emit_particles()
 end
 
 function rosalina_health_meter_particles()
-    --    
+    local i = 1
+    while particles[i] do
+        local p = particles[i]
+        if p.dead then
+            particles[i] = particles[#particles]
+            particles[#particles] = nil
+        else
+            p.update()
+
+            local nx, ny, nz = p.x + p.vx, p.y + p.vy, p.z + p.vz
+            djui_hud_render_texture_interpolated(p.tex,
+                p.x, p.y, p.z, p.z,
+                 nx,  ny,  nz,  nz
+            )
+            p.x, p.y, p.z = nx, ny, nz
+            i = i + 1
+        end
+    end
 end
 
 local vanillaMeter = {
