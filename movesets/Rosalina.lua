@@ -238,13 +238,34 @@ function rosalina_before_action(m, action)
 end
 
 -- HUD stuff
+local Particle = function ()
+    return {
+        x  = 0, y  = 0, z  = 0,
+        vx = 0, vy = 0, vz = 0,
+    }
+end
+-- cur_obj_scale(o.header.gfx.scale.x - (1 - o.header.gfx.scale.x)*.6)
+-- line of interest
+local P_SHATTER_SMALL = function (x, y, s)
+    
+end
+local P_SHATTER_LARGE = function (x, y, s)
+    
+end
 
 local particles = {}
 local function create_particle(type, x, y, scale)
-    
+    local p = {}
+
+    particles[#particles+1] = p
 end
+
+local function emit_particles()
+    --
+end
+
 function rosalina_health_meter_particles()
-    
+    --    
 end
 
 local vanillaMeter = {
