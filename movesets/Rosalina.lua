@@ -278,7 +278,7 @@ local PARTICLE_GLASS = function (x, y, s)
     p.r = math.random(65536)
 
     local angle = math.random() * tau
-    local force = (2 + 2*math.random()) * s
+    local force = (1 + 2*math.random()) * s
     p.vx, p.vy = math.sin(angle) * force, math.cos(angle) * force
     p.vz = -s / 10
 
@@ -293,7 +293,7 @@ local emit_shatter = function (x, y, s)
 end
 local emit_shatter_extra = function (x, y, s)
     for i = 1, 46 do
-        local xO, yO = (4 - 8*math.random())*s, (4 - 8*math.random())*s
+        local xO, yO = (8 - 16*math.random())*s, (8 - 16*math.random())*s
         create_particle(PARTICLE_GLASS, x + xO, y + yO, s)
     end
 end
@@ -334,15 +334,10 @@ local function render_texture_shadow_interp(tex, xP, yP, wP, hP, x, y, w, h, xSP
     djui_hud_render_texture_interpolated(tex, xP, yP, wP, hP, x, y, w, h)
 end
 
-local TEX_LIFE_LABEL = get_texture_info("char-select-ec-rosa-meter-life")
+local TEX_METER = load_textures("char-select-ec-rosa-meter-", 0, 6)
+local TEX_METER_NUM = load_textures("char-select-ec-rosa-meter-num-", 0, 6)
 local TEX_METER_CRACK = get_texture_info("char-select-ec-rosa-meter-crack")
-
-local specialMeter = {}
-local specialMeterNum = {}
-for i = 0, 6 do
-    specialMeter[i] = get_texture_info("char-select-ec-rosa-meter-"..i)
-    specialMeterNum[i] = get_texture_info("char-select-ec-rosa-meter-num-"..i)
-end
+local TEX_LIFE_LABEL = get_texture_info("char-select-ec-rosa-meter-life")
 
 function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
     local m = gMarioStates[localIndex]
@@ -394,7 +389,7 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
 
             if timer > 13 then
                 if extra and e.hp == 3 then
-                    emit_shatter_extra(x3+32*w*s, y3+32*h*s, w*2)
+                    emit_shatter_extra(x3+32*w, y3+32*h, w*1.2)
                 end
                 e.meterState = e.hp > 0 and METER_STATE_IDLE or METER_STATE_BREAK
             end
@@ -417,6 +412,7 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
                 pos.y = pos.y + 200
 
                 if djui_hud_world_pos_to_screen_pos(pos, pos) ~= 0 then
+                    pos.y = pos.y - 64*h
                     local t = IN_SINE((math.max(23, timer) - 23)/12)
                     local tP = IN_SINE((math.max(23, timer-1) - 23)/12)
                     x3, x3P = math.lerp(pos.x, x3, t), math.lerp(pos.x, x3P, tP)
@@ -433,7 +429,7 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
 
         elseif state == METER_STATE_BREAK then
             if timer == 10 then
-                emit_shatter(x+22*w*s, y+28*h*s, w*2)
+                emit_shatter(x+22*w, y+28*h, w*1.2)
             end
             if timer > 10 then
                 crack = 1
@@ -442,9 +438,9 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
 
         e.meterTimer = e.meterState == state and (timer + 1) or 1
         djui_chat_message_create(e.meterState..", "..e.meterTimer)
-        local meter = specialMeter[math.min(e.hp, 3)]
-        local extraMeter = e.hp > 3 and specialMeter[e.hp] or specialMeter[0]
-        local num = specialMeterNum[e.hp]
+        local meter = TEX_METER[math.min(e.hp, 3)]
+        local extraMeter = e.hp > 3 and TEX_METER[e.hp] or TEX_METER[0]
+        local num = TEX_METER_NUM[e.hp]
 
         local ws,  wsP,   hs,  hsP
             = w*s, wP*sP, h*s, hP*sP
@@ -514,7 +510,7 @@ local lifeMushroomObjs = {}
 local E_MODEL_LIFE_MUSHROOM = smlua_model_util_get_id("life_mushroom_geo")
 
 function create_life_mushroom(o)
-    if math.random(5) == 5 and obj_has_behavior_ids(o, mushroomBhvs) then
+    if math.random(5) ~= 6 and obj_has_behavior_ids(o, mushroomBhvs) then
         lifeMushroomObjs[o] = 1
         djui_chat_message_create("life mushroom!")
     else lifeMushroomObjs[o] = nil end
