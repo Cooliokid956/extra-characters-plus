@@ -1,7 +1,7 @@
 require "anims/rosalina"
 
 -- misc locals
-local asin, pi, max = math.asin, math.pi, math.max
+local asin, pi, tau, max = math.asin, math.pi, 2*math.pi, math.max
 local IN_SINE, OUT_SINE, INV_OUT_SINE = IN_SINE, OUT_SINE, function (x) return 2 * asin(x) / pi end
 local djui_hud_set_color, djui_hud_render_texture_interpolated = djui_hud_set_color, djui_hud_render_texture_interpolated
 local sins, coss = sins, coss
@@ -204,6 +204,10 @@ function rosalina_update(m)
         e.hp = math.min(e.hp + (m.healCounter + 1) // 4, e.hp > 3 and 6 or 3)
         m.healCounter = 0
     end
+    if e.meterState == METER_STATE_BREAK and e.hp > 0 then
+        e.meterState = METER_STATE_IDLE
+        e.meterTimer = 1
+    end
 
     if m.playerIndex == 0 then
         m.health = (e.hp == 3 and e.meterTimer > 60) and 0x880 or 0x7FF * OUT_SINE(e.hp / 6)
@@ -254,40 +258,44 @@ end
 
 local particles = {}
 local function create_particle(type, x, y, scale)
-    local p = type(x, y, scale)
-
-    particles[#particles+1] = p
+    particles[#particles+1] = type(x, y, scale)
 end
 
--- cur_obj_scale(o.header.gfx.scale.x - (1 - o.header.gfx.scale.x)*.6)
--- line of interest
-local glassTex = {}
+-- Glass particles
+local glassTex = load_textures("char-select-ec-rosa-meter-glass-", 1, 2)
 function glass_update(p)
-    p.z = max(0, p.z - 0.06)
-
-    if p.z == 0 then p.dead = 1 end
+    djui_hud_set_rotation(p.r, 0.5, 0.5)
+    if p.z < 0 then p.dead = 1 end
 end
-local ParticleGlass = function (x, y, s)
+local PARTICLE_GLASS = function (x, y, s)
     local p = Particle()
     p.x, p.y = x, y
     p.z = (0.8 + math.random() * 0.4) * s
-    -- p.tex = 
+    p.r = math.random(65536)
+
+    local angle = math.random() * tau
+    local force = (2 + 2*math.random()) * s
+    p.vx, p.vy = math.sin(angle) * force, math.cos(angle) * force
+    p.vz = -s / 10
+
+    p.tex = glassTex[math.random(#glassTex)]
+    p.update = glass_update
+    return p
 end
-local EMIT_SHATTER_S = function (x, y, s)
-    for i = 1, 10, 1 do
-        create_particle(ParticleGlass)
+local emit_shatter = function (x, y, s)
+    for i = 1, 18 do
+        create_particle(PARTICLE_GLASS, x, y, s)
     end
 end
-local EMIT_SHATTER_L = function (x, y, s)
-    
-end
-
-
-local function emit_particles()
-    --
+local emit_shatter_extra = function (x, y, s)
+    for i = 1, 46 do
+        local xO, yO = (4 - 8*math.random())*s, (4 - 8*math.random())*s
+        create_particle(PARTICLE_GLASS, x + xO, y + yO, s)
+    end
 end
 
 function rosalina_health_meter_particles()
+    djui_hud_set_resolution(RESOLUTION_N64)
     local i = 1
     while particles[i] do
         local p = particles[i]
@@ -297,10 +305,11 @@ function rosalina_health_meter_particles()
         else
             p:update()
 
+            local t = p.tex
             local nx, ny, nz = p.x + p.vx, p.y + p.vy, p.z + p.vz
-            djui_hud_render_texture_interpolated(p.tex,
-                p.x, p.y, p.z, p.z,
-                 nx,  ny,  nz,  nz
+            djui_hud_render_texture_interpolated(t,
+                p.x - t.width * p.z/2, p.y - t.height * p.z/2, p.z, p.z,
+                 nx - t.width *  nz/2,  ny - t.height *  nz/2,  nz,  nz
             )
             p.x, p.y, p.z = nx, ny, nz
             i = i + 1
@@ -308,22 +317,8 @@ function rosalina_health_meter_particles()
     end
 end
 
-local vanillaMeter = {
-    label = {
-        left  = get_texture_info("char-select-ec-rosalina-meter-left"),
-        right = get_texture_info("char-select-ec-rosalina-meter-right"),
-    },
-    pie = {
-        get_texture_info("char_select_custom_meter_pie1"),
-        get_texture_info("char_select_custom_meter_pie2"),
-        get_texture_info("char_select_custom_meter_pie3"),
-        get_texture_info("char_select_custom_meter_pie4"),
-        get_texture_info("char_select_custom_meter_pie5"),
-        get_texture_info("char_select_custom_meter_pie6"),
-        get_texture_info("char_select_custom_meter_pie7"),
-        get_texture_info("char_select_custom_meter_pie8"),
-    }
-}
+local vanillaMeter = load_meter("rosalina")
+vanillaMeter.pie = load_textures("char_select_custom_meter_pie", 1, 8)
 
 local function render_texture_shadow_interp(tex, xP, yP, wP, hP, x, y, w, h, xSP, ySP, xS, yS)
     local c = djui_hud_get_color()
@@ -394,8 +389,10 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
             end
 
             if timer > 13 then
+                if extra and e.hp == 3 then
+                    emit_shatter_extra(x3+32*w*s, y3+32*h*s, w*2)
+                end
                 e.meterState = e.hp > 0 and METER_STATE_IDLE or METER_STATE_BREAK
-                e.meterTimer = 1
             end
 
         elseif state == METER_STATE_JOIN then
@@ -431,16 +428,16 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
             if timer > 40 then e.meterState = METER_STATE_IDLE end
 
         elseif state == METER_STATE_BREAK then
+            if timer == 10 then
+                emit_shatter(x+22*w*s, y+28*h*s, w*2)
+            end
             if timer > 10 then
                 crack = 1
-                if timer == 11 then
-                    -- particles!
-                end
             end
         end
 
-        e.meterTimer = timer + 1
-
+        e.meterTimer = e.meterState == state and (timer + 1) or 1
+        djui_chat_message_create(e.meterState..", "..e.meterTimer)
         local meter = specialMeter[math.min(e.hp, 3)]
         local extraMeter = e.hp > 3 and specialMeter[e.hp] or specialMeter[0]
         local num = specialMeterNum[e.hp]
@@ -455,13 +452,6 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
             xP, yP, wsP, hsP,
             x,  y,  ws,  hs,
             3*wsP, 2*hsP, 3*ws, 2*hs)
-        
-        if crack == 1 then
-            -- x=12, y=17
-            djui_hud_render_texture_interpolated(TEX_METER_CRACK,
-                xP + 12*wsP, yP + 17*hsP, wsP, hsP,
-                x  + 12*ws,  y  + 17*hs,  ws,  hs)
-        end
 
         -- Extra Meter
         if x3 then
@@ -469,6 +459,12 @@ function rosalina_health_meter(localIndex, health, xP, yP, wP, hP, x, y, w, h)
                 x3P, y3P, wsP, hsP,
                 x3,  y3,  ws,  hs,
                 3*wsP, 2*hsP, 3*ws, 2*hs)
+        end
+
+        if crack == 1 then
+            djui_hud_render_texture_interpolated(TEX_METER_CRACK,
+                xP + 12*wsP, yP + 17*hsP, wsP, hsP,
+                x  + 12*ws,  y  + 17*hs,  ws,  hs)
         end
 
         -- LIFE Label
